@@ -5,6 +5,7 @@ import com.universe_view.domain.model.SpaceObjectCategory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -15,10 +16,6 @@ public class CelesTrakProvider implements SatelliteProvider {
 
     private static final Logger log = LoggerFactory.getLogger(CelesTrakProvider.class);
 
-    // Correct CelesTrak GP catalog endpoint — NOT SOCRATES (conjunction analysis)
-    // Doc: https://celestrak.org/NORAD/documentation/gp-data-formats.php
-    // Pattern: https://celestrak.org/NORAD/elements/gp.php?GROUP=<group>&FORMAT=TLE
-    //          https://celestrak.org/NORAD/elements/gp.php?CATNR=<id>&FORMAT=TLE
     private static final String GP_BASE = "https://celestrak.org/NORAD/elements/gp.php";
 
     private static final Map<String, String> GROUP_URLS = Map.of(
@@ -46,39 +43,65 @@ public class CelesTrakProvider implements SatelliteProvider {
                 .build();
     }
 
-    @Override public List<Satellite> fetchActive()   { return fetch("active"); }
-    @Override public List<Satellite> fetchISS()      { return fetch("iss"); }
-    @Override public List<Satellite> fetchStarlink() { return fetch("starlink"); }
+    @Override public List<Satellite> fetchActive()   { return fetchOrEmpty("active"); }
+    @Override public List<Satellite> fetchISS()      { return fetchOrEmpty("iss"); }
+    @Override public List<Satellite> fetchStarlink() { return fetchOrEmpty("starlink"); }
 
     @Override
     public List<Satellite> fetchByGroup(String group) {
         if (!GROUP_URLS.containsKey(group)) {
             throw new IllegalArgumentException("Unknown CelesTrak group: " + group);
         }
-        return fetch(group);
+        return fetchOrEmpty(group);
     }
 
     @Override
     public String getProviderName() { return "CelesTrak"; }
 
-    private List<Satellite> fetch(String group) {
+    /**
+     * Returns parsed satellites, or null when CelesTrak signals data hasn't changed (403).
+     * Null = caller should keep existing cached data unchanged.
+     * Never throws — all errors are logged and mapped to null.
+     */
+    public List<Satellite> fetchOrNull(String group) {
         String url              = GROUP_URLS.get(group);
         SpaceObjectCategory cat = GROUP_CATEGORIES.getOrDefault(group, SpaceObjectCategory.OTHER_SATELLITE);
 
-        log.info("Fetching TLEs from CelesTrak group={} url={}", group, url);
+        log.info("Fetching TLEs from CelesTrak group={}", group);
 
-        String tleText = restClient.get()
-                .uri(url)
-                .retrieve()
-                .body(String.class);
+        try {
+            String tleText = restClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .body(String.class);
 
-        if (tleText == null || tleText.isBlank()) {
-            log.warn("Empty TLE response for group={}", group);
-            return List.of();
+            if (tleText == null || tleText.isBlank()) {
+                log.warn("Empty TLE response for group={}", group);
+                return null;
+            }
+
+            List<Satellite> sats = TleParser.parse(tleText, cat);
+            log.info("Parsed {} satellites for group={}", sats.size(), group);
+            return sats;
+
+        } catch (HttpClientErrorException.Forbidden e) {
+            // CelesTrak returns 403 when the data hasn't been updated since the last download.
+            // This is documented behaviour — not an error. Serve from cache.
+            log.info("CelesTrak group={} unchanged since last fetch (403) — cache remains valid", group);
+            return null;
+
+        } catch (HttpClientErrorException e) {
+            log.error("CelesTrak HTTP {} for group={}: {}", e.getStatusCode(), group, e.getStatusText());
+            return null;
+
+        } catch (Exception e) {
+            log.error("Error fetching CelesTrak group={}: {}", group, e.getMessage());
+            return null;
         }
+    }
 
-        List<Satellite> sats = TleParser.parse(tleText, cat);
-        log.info("Parsed {} satellites for group={}", sats.size(), group);
-        return sats;
+    private List<Satellite> fetchOrEmpty(String group) {
+        List<Satellite> result = fetchOrNull(group);
+        return result != null ? result : List.of();
     }
 }
