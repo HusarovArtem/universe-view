@@ -1,9 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Universe View</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+          href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500&display=swap"
+          rel="stylesheet"
+  />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
 <body>
+<!-- HUD Top Bar -->
 <div id="hud">
-  <h1 class="glow">UniverseView</h1>
-  <div style="padding-bottom: 10px">EARTH SIM v0.1</div>
+  <h1 class="hud-title">UNIVERSE <span class="accent">VIEW</span></h1>
+  <div id="hud-time" class="hud-time">STAGE I — EARTH</div>
+  <div id="hud-coords" class="hud-coords">LAT — / LON —</div>
 </div>
 
+<!-- Info Panel (right side) -->
+<div id="infoPanel" class="hidden">
+  <div class="info-tag">LOCATION</div>
+  <h2 id="infoName">—</h2>
+  <div class="info-row">
+    <span class="info-label">LAT</span>
+    <span id="infoLat" class="info-value">—</span>
+  </div>
+  <div class="info-row">
+    <span class="info-label">LON</span>
+    <span id="infoLon" class="info-value">—</span>
+  </div>
+</div>
+
+<!-- Controls Panel (bottom left) -->
+<div id="controlsPanel">
+  <div class="control-title">CONTROLS</div>
+  <label class="toggle-row">
+    <div class="toggle-label">SPIN</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="spinToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+  <label class="toggle-row">
+    <div class="toggle-label">CAPITALS</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="citiesToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+  <label class="toggle-row">
+    <div class="toggle-label">BORDERS</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="bordersToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+  <label class="toggle-row">
+    <div class="toggle-label">ATMOSPHERE</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="atmosphereToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+</div>
+
+<!-- Stage indicator (bottom right - for future stages) -->
+<div id="stageIndicator">
+  <div class="stage active" data-stage="0">STAGE 0</div>
+  <div class="stage active" data-stage="1">STAGE 1</div>
+  <div class="stage upcoming" data-stage="2">STAGE 2</div>
+  <div class="stage upcoming" data-stage="3">STAGE 3</div>
+</div>
 
 <script type="module" src="/src/main.js"></script>
 </body>
+</html>

@@ -1,7 +1,24 @@
 /* =========================
-   GLOBAL RESET
+   VARIABLES
 ========================= */
-* {
+:root {
+  --bg-deep:       #00050f;
+  --bg-panel:      rgba(4, 10, 24, 0.75);
+  --border:        rgba(80, 160, 255, 0.12);
+  --border-bright: rgba(80, 160, 255, 0.35);
+  --accent:        #4d9fff;
+  --accent-glow:   rgba(77, 159, 255, 0.4);
+  --accent-hot:    #00ffe0;
+  --text-primary:  #e8f0ff;
+  --text-muted:    rgba(180, 200, 255, 0.5);
+  --font-mono:     'Space Mono', monospace;
+  --font-body:     'Outfit', sans-serif;
+}
+
+/* =========================
+   RESET
+========================= */
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -11,139 +28,283 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: radial-gradient(circle at center, #05070f 0%, #000000 100%);
-  font-family: 'Inter', 'Segoe UI', sans-serif;
-  color: white;
+  background: var(--bg-deep);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  cursor: default;
 }
 
-/* =========================
-   CANVAS
-========================= */
 canvas {
   display: block;
+  position: fixed;
+  inset: 0;
 }
 
 /* =========================
    HUD TOP BAR
 ========================= */
 #hud {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  padding: 14px 20px;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(
+          to bottom,
+          rgba(0, 5, 15, 0.85) 0%,
+          rgba(0, 5, 15, 0.0) 100%
+  );
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+  pointer-events: none;
+}
 
+.hud-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--text-primary);
+}
+
+.hud-title .accent {
+  color: var(--accent);
+}
+
+.hud-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+}
+
+.hud-coords {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--accent);
+  min-width: 200px;
+  text-align: right;
+}
+
+/* =========================
+   INFO PANEL
+========================= */
+#infoPanel {
+  position: fixed;
+  right: 20px;
+  top: 70px;
+  width: 220px;
+  padding: 16px 18px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  z-index: 100;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 0 40px rgba(77, 159, 255, 0.06), inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+#infoPanel.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+}
+
+.info-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+
+#infoName {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  background: rgba(10, 12, 20, 0.4);
-  backdrop-filter: blur(10px);
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 5px 0;
+  border-top: 1px solid var(--border);
 }
 
-/* TITLE */
-#hud h1 {
-  font-size: 14px;
+.info-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
   letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #8ab4ff;
+  color: var(--text-muted);
 }
 
-/* =========================
-   RIGHT PANEL INFO
-========================= */
-#infoPanel {
-  position: absolute;
-  right: 20px;
-  top: 80px;
-
-  width: 260px;
-  padding: 16px;
-
-  background: rgba(15, 18, 30, 0.6);
-  backdrop-filter: blur(12px);
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-
-  box-shadow: 0 0 30px rgba(0, 150, 255, 0.08);
-}
-
-/* CITY INFO TEXT */
-#infoPanel h2 {
-  font-size: 13px;
-  margin-bottom: 10px;
-  color: #ffffff;
-}
-
-#infoPanel p {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.4;
-}
-
-/* =========================
-   BOTTOM TIME SLIDER (for future Stage 3)
-========================= */
-#timeControl {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: 400px;
-  padding: 10px 14px;
-
-  background: rgba(10, 12, 20, 0.5);
-  backdrop-filter: blur(10px);
-
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* slider */
-input[type="range"] {
-  width: 100%;
-  accent-color: #4da3ff;
-}
-
-/* =========================
-   GLOW EFFECTS
-========================= */
-.glow {
-  text-shadow: 0 0 10px rgba(77, 163, 255, 0.6);
-}
-
-/* =========================
-   CITY HOVER LABEL (future use)
-========================= */
-.label {
-  position: absolute;
-  padding: 4px 8px;
-
+.info-value {
+  font-family: var(--font-mono);
   font-size: 11px;
-
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-
-  color: white;
-
-  pointer-events: none;
-  transform: translate(-50%, -50%);
+  color: var(--accent-hot);
 }
 
 /* =========================
-   SMALL ANIMATION GLOW
+   CONTROLS PANEL
 ========================= */
-@keyframes pulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
+#controlsPanel {
+  position: fixed;
+  bottom: 24px;
+  left: 20px;
+  width: 200px;
+  padding: 14px 16px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  z-index: 100;
+  box-shadow: 0 0 40px rgba(77, 159, 255, 0.04);
 }
 
-.pulse {
-  animation: pulse 2s infinite;
+.control-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+}
+
+.toggle-row:hover .toggle-label {
+  color: var(--text-primary);
+}
+
+.toggle-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+  user-select: none;
+}
+
+/* Toggle switch */
+.toggle-wrapper {
+  position: relative;
+  width: 32px;
+  height: 18px;
+}
+
+.toggle-wrapper input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(80, 160, 255, 0.1);
+  border: 1px solid var(--border-bright);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  left: 3px;
+  top: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggle-wrapper input:checked + .toggle-slider {
+  background: rgba(77, 159, 255, 0.2);
+  border-color: var(--accent);
+}
+
+.toggle-wrapper input:checked + .toggle-slider::after {
+  transform: translateX(14px);
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
+/* =========================
+   STAGE INDICATOR
+========================= */
+#stageIndicator {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
+  align-items: flex-end;
+}
+
+.stage {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+}
+
+.stage.active {
+  color: var(--accent);
+  border-color: var(--border-bright);
+  background: rgba(77, 159, 255, 0.08);
+}
+
+.stage.upcoming {
+  color: rgba(80, 120, 180, 0.3);
+  border-color: rgba(80, 120, 180, 0.1);
+}
+
+/* =========================
+   CURSOR — globe hover
+========================= */
+body.hovering-city {
+  cursor: crosshair;
+}
+
+/* =========================
+   SCANLINE OVERLAY (aesthetic)
+========================= */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 3px,
+          rgba(0, 0, 0, 0.015) 3px,
+          rgba(0, 0, 0, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 200;
 }

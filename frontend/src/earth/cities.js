@@ -1,22 +1,56 @@
 import * as THREE from 'three';
-import { latLonToVector3 } from './latlon.js';
+import { latLonToVector3 } from '../utils/latlon.js';
+import { EARTH_RADIUS } from './Earth.js';
 
-export function addCity(parent, city, radius = 5) {
-    const geometry = new THREE.SphereGeometry(0.05, 8, 8);
+// Sit slightly above the surface to avoid z-fighting
+const MARKER_ALTITUDE = EARTH_RADIUS + 0.04;
 
-    const material = new THREE.MeshBasicMaterial({
-        color: 0xff4444
-    });
+const COLOR_DEFAULT = new THREE.Color(0xff4455);
+const COLOR_HOVERED = new THREE.Color(0x00ffe0);
 
-    const point = new THREE.Mesh(geometry, material);
+// Shared geometry — all markers reuse the same geometry (performance)
+const SHARED_GEO = new THREE.SphereGeometry(0.045, 8, 8);
 
-    const pos = latLonToVector3(city.lat, city.lon, radius);
-    point.position.copy(pos);
+/**
+ * Creates a single capital city marker and adds it to `parent`.
+ *
+ * @param {THREE.Object3D} parent   - the group to add the marker to
+ * @param {{ name: string, lat: number, lon: number }} city
+ * @returns {THREE.Mesh}  the marker mesh (userData has name/lat/lon)
+ */
+export function addCity(parent, city) {
+    const mat = new THREE.MeshBasicMaterial({ color: COLOR_DEFAULT });
+    const mesh = new THREE.Mesh(SHARED_GEO, mat);
 
-    // 🔥 important: prevent weird scaling inheritance
-    point.matrixAutoUpdate = true;
+    mesh.position.copy(latLonToVector3(city.lat, city.lon, MARKER_ALTITUDE));
 
-    parent.add(point);
+    mesh.userData = {
+        type: 'capital',
+        name: city.name,
+        lat:  city.lat,
+        lon:  city.lon,
+    };
 
-    return point;
+    mesh.name = `City_${city.name}`;
+    parent.add(mesh);
+
+    return mesh;
+}
+
+/**
+ * Highlights a city marker (hover state).
+ * @param {THREE.Mesh} mesh
+ */
+export function highlightCity(mesh) {
+    mesh.material.color.copy(COLOR_HOVERED);
+    mesh.scale.setScalar(1.7);
+}
+
+/**
+ * Resets a city marker to default state.
+ * @param {THREE.Mesh} mesh
+ */
+export function resetCity(mesh) {
+    mesh.material.color.copy(COLOR_DEFAULT);
+    mesh.scale.setScalar(1);
 }

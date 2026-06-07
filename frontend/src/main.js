@@ -1,186 +1,143 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-import { createScene } from './core/scene.js';
-import { createCamera } from './core/camera.js';
+import { createScene }   from './core/scene.js';
+import { createCamera }  from './core/camera.js';
 import { createRenderer } from './core/renderer.js';
 
-import { createEarth } from './earth/Earth.js';
-import { addCity } from './earth/cities.js';
+import { createEarth, setAtmosphereVisible } from './earth/Earth.js';
+import { createCountryBorders }              from './earth/CountryBorders.js';
+import { addCity }                           from './earth/cities.js';
+
+import { HoverSystem } from './ui/HoverSystem.js';
+import { InfoPanel }   from './ui/InfoPanel.js';
 
 import capitals from './data/capitals.json';
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import {createCountryBorders} from "./earth/countryBorders.js";
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDERER / SCENE / CAMERA
+// ─────────────────────────────────────────────────────────────────────────────
 
-//
-// ==========================
-// 🌍 SETUP
-// ==========================
-//
-
-const scene = createScene();
-const camera = createCamera();
+const scene    = createScene();
+const camera   = createCamera();
 const renderer = createRenderer();
 
-camera.position.set(0, 0, 12);
+// ─────────────────────────────────────────────────────────────────────────────
+// LIGHTING
+// Lights go in the scene, not inside Earth, so they illuminate everything.
+// ─────────────────────────────────────────────────────────────────────────────
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.enableZoom = true;
+const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.6);
+sunLight.position.set(50, 30, 80);
+scene.add(sunLight);
 
-//
-// ==========================
-// 🌍 EARTH
-// ==========================
-//
+// Faint ambient so the dark side isn't pitch-black
+const ambientLight = new THREE.AmbientLight(0x112244, 0.9);
+scene.add(ambientLight);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EARTH
+// ─────────────────────────────────────────────────────────────────────────────
 
 const earth = createEarth();
 scene.add(earth);
 
-const borders = createCountryBorders();
-earth.add(borders);
+// Country borders (async — loaded from GeoJSON)
+createCountryBorders().then((borders) => {
+    if (borders) {
+        earth.add(borders);
+        // Wire up toggle AFTER borders exist
+        document.getElementById('bordersToggle').addEventListener('change', (e) => {
+            borders.visible = e.target.checked;
+        });
+    } else {
+        // No borders loaded — disable the toggle
+        const toggle = document.getElementById('bordersToggle');
+        toggle.disabled = true;
+        toggle.closest('.toggle-row').style.opacity = '0.3';
+    }
+});
 
-let earthSpinning = true;
-let showCities = true;
-
-//
-// ==========================
-// 📍 CITIES GROUP (IMPORTANT FIX)
-// ==========================
-//
+// ─────────────────────────────────────────────────────────────────────────────
+// CITY MARKERS
+// All markers live inside a group that is a child of the earth group,
+// so they rotate with the globe automatically.
+// ─────────────────────────────────────────────────────────────────────────────
 
 const citiesGroup = new THREE.Group();
+citiesGroup.name  = 'CitiesGroup';
 earth.add(citiesGroup);
 
-const cityObjects = [];
+/** @type {THREE.Mesh[]} */
+const cityMeshes = capitals.map((city) => addCity(citiesGroup, city));
 
-const CITY_RADIUS = 5.02;
+// ─────────────────────────────────────────────────────────────────────────────
+// ORBIT CONTROLS
+// ─────────────────────────────────────────────────────────────────────────────
 
-capitals.forEach((city) => {
-    const obj = addCity(citiesGroup, city, CITY_RADIUS);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping    = true;
+controls.dampingFactor    = 0.06;
+controls.enableZoom       = true;
+controls.minDistance      = 6.5;   // can't clip inside earth
+controls.maxDistance      = 60;
+controls.enablePan        = false;
+controls.rotateSpeed      = 0.5;
+controls.zoomSpeed        = 0.8;
 
-    obj.userData = {
-        name: city.name,
-        lat: city.lat,
-        lon: city.lon
-    };
+// ─────────────────────────────────────────────────────────────────────────────
+// UI SYSTEMS
+// ─────────────────────────────────────────────────────────────────────────────
 
-    cityObjects.push(obj);
-});
+const hoverSystem = new HoverSystem(camera, renderer.domElement);
+hoverSystem.setTargets(cityMeshes);
 
-//
-// ==========================
-// 🖱️ MOUSE + RAYCASTER FIX
-// ==========================
-//
+const infoPanel = new InfoPanel();
 
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
 
-let hovered = null;
+let earthSpinning = true;
+let showCities    = true;
 
-window.addEventListener('mousemove', (event) => {up
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-});
-
-function updateHover() {
-    // 🔥 IMPORTANT: force matrix update BEFORE raycast
-    earth.updateMatrixWorld(true);
-    citiesGroup.updateMatrixWorld(true);
-
-    raycaster.setFromCamera(mouse, camera);
-
-    const intersects = raycaster.intersectObjects(cityObjects, true);
-
-    if (intersects.length > 0 && showCities) {
-        const obj = intersects[0].object;
-
-        if (hovered !== obj) {
-            if (hovered) {
-                hovered.material.color.set(0xff4444);
-                hovered.scale.set(1, 1, 1);
-            }
-
-            hovered = obj;
-
-            hovered.material.color.set(0x00ffcc);
-            hovered.scale.set(1.6, 1.6, 1.6);
-        }
-    } else {
-        if (hovered) {
-            hovered.material.color.set(0xff4444);
-            hovered.scale.set(1, 1, 1);
-            hovered = null;
-        }
-    }
-}
-
-//
-// ==========================
-// 🎛️ UI TOGGLES (CHECKBOXES)
-// ==========================
-//
-
-const ui = document.createElement('div');
-
-ui.style.position = 'absolute';
-ui.style.top = '12px';
-ui.style.right = '12px';
-ui.style.zIndex = '9999';
-
-ui.style.color = 'white';
-ui.style.background = 'rgba(0,0,0,0.55)';
-ui.style.padding = '12px 14px';
-ui.style.borderRadius = '10px';
-ui.style.backdropFilter = 'blur(10px)';
-ui.style.fontFamily = 'sans-serif';
-ui.style.fontSize = '13px';
-
-ui.innerHTML = `
-  <label>
-    <input type="checkbox" id="spinToggle" checked />
-    Earth spinning
-  </label>
-  <br/><br/>
-  <label>
-    <input type="checkbox" id="citiesToggle" checked />
-    Show capitals
-  </label>
-`;
-
-document.body.appendChild(ui);
-
-//
-// ==========================
-// 🎛️ UI LOGIC
-// ==========================
-//
+// ─────────────────────────────────────────────────────────────────────────────
+// UI CONTROL WIRING
+// ─────────────────────────────────────────────────────────────────────────────
 
 document.getElementById('spinToggle').addEventListener('change', (e) => {
     earthSpinning = e.target.checked;
 });
 
 document.getElementById('citiesToggle').addEventListener('change', (e) => {
-    showCities = e.target.checked;
-
-    citiesGroup.visible = showCities;
+    showCities             = e.target.checked;
+    citiesGroup.visible    = showCities;
+    if (!showCities) infoPanel.hide();
 });
 
-//
-// ==========================
-// 🌍 ANIMATION LOOP
-// ==========================
-//
+document.getElementById('atmosphereToggle').addEventListener('change', (e) => {
+    setAtmosphereVisible(earth, e.target.checked);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANIMATION LOOP
+// ─────────────────────────────────────────────────────────────────────────────
 
 function animate() {
     requestAnimationFrame(animate);
 
     if (earthSpinning) {
-        earth.rotation.y += 0.0015;
+        earth.rotation.y += 0.0012;
     }
 
-    updateHover();
+    // Hover detection
+    const hoveredMesh = hoverSystem.update(earth, showCities);
+
+    if (hoveredMesh) {
+        infoPanel.show(hoveredMesh.userData);
+    } else {
+        infoPanel.hide();
+    }
 
     controls.update();
     renderer.render(scene, camera);
@@ -188,15 +145,12 @@ function animate() {
 
 animate();
 
-//
-// ==========================
-// 📏 RESIZE
-// ==========================
-//
+// ─────────────────────────────────────────────────────────────────────────────
+// RESIZE
+// ─────────────────────────────────────────────────────────────────────────────
 
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
+    camera.updateAspect(window.innerWidth, window.innerHeight);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
