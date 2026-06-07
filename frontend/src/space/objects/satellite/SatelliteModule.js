@@ -2,16 +2,11 @@ import { CelesTrakProvider, SatelliteProviderRegistry } from './SatelliteProvide
 import { KeplerPropagator } from '../../orbit/KeplerPropagator.js';
 
 export class SatelliteModule {
-    /** @type {Map<string, import('../../core/Satellite.js').Satellite>} */
-    #satellites = new Map();
-    /** @type {SatelliteProviderRegistry} */
+    #satellites  = new Map();
     #registry;
-    /** @type {import('../../time/SimulationTimeEngine.js').SimulationTimeEngine} */
     #timeEngine;
-    /** @type {Function} */
     #unsubscribe = null;
-    /** @type {Set<(sats: Map) => void>} */
-    #onUpdate = new Set();
+    #onUpdate    = new Set();
 
     constructor(timeEngine) {
         this.#timeEngine = timeEngine;
@@ -46,6 +41,7 @@ export class SatelliteModule {
     #startTracking() {
         if (this.#unsubscribe) this.#unsubscribe();
         this.#unsubscribe = this.#timeEngine.subscribe((simTimeMs) => {
+            if (this.#satellites.size === 0) return;
             this.#propagateAll(simTimeMs);
             this.#notifyUpdate();
         });
@@ -54,10 +50,10 @@ export class SatelliteModule {
     #propagateAll(simTimeMs) {
         for (const sat of this.#satellites.values()) {
             if (!sat.orbitalElements) continue;
-            const pos       = KeplerPropagator.propagate(sat.orbitalElements, simTimeMs);
-            const scenePos  = KeplerPropagator.eciToScene(pos);
-            sat.position    = { x: scenePos.x, y: scenePos.y, z: scenePos.z };
-            sat.altitudeKm  = pos.altKm;
+            const pos      = KeplerPropagator.propagate(sat.orbitalElements, simTimeMs);
+            const scenePos = KeplerPropagator.eciToScene(pos);
+            sat.position   = { x: scenePos.x, y: scenePos.y, z: scenePos.z };
+            sat.altitudeKm = pos.altKm;
         }
     }
 

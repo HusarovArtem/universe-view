@@ -56,16 +56,19 @@ public class SatelliteDataService {
     }
 
     public Optional<Satellite> findById(String id) {
-        if (index.isEmpty()) getActive();
+        // Try existing index first before triggering a full fetch
+        Satellite cached = index.get(id);
+        if (cached != null) return Optional.of(cached);
+        // Trigger active load to populate index
+        getActive();
         return Optional.ofNullable(index.get(id));
     }
 
-    // Refresh TLE data every 6 hours
     @Scheduled(fixedDelayString = "PT6H")
     @CacheEvict(value = { "satellites-active", "satellites-iss", "satellites-starlink" }, allEntries = true)
     public void evictCaches() {
         index.clear();
-        log.info("Satellite TLE caches evicted — data will reload on next request");
+        log.info("Satellite TLE caches evicted — will reload on next request");
     }
 
     private void indexSatellites(List<Satellite> sats) {

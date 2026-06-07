@@ -76,7 +76,7 @@ satelliteModule.onUpdate((satellites) => {
     satelliteRenderer.update(satellites);
 });
 
-// ─── Controls ────────────────────────────────────────────────────────────────
+// ─── Orbit Controls ──────────────────────────────────────────────────────────
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping  = true;
@@ -90,12 +90,13 @@ controls.zoomSpeed      = 0.8;
 
 // ─── UI Systems ──────────────────────────────────────────────────────────────
 
-const hoverSystem    = new HoverSystem(camera, renderer.domElement);
+const hoverSystem = new HoverSystem(camera, renderer.domElement);
 hoverSystem.setTargets(cityMeshes);
 
-const infoPanel      = new InfoPanel();
-const satTooltip     = new SatelliteTooltip();
-const timeControl    = new TimeControlPanel(timeEngine);
+const infoPanel  = new InfoPanel();
+const satTooltip = new SatelliteTooltip();
+
+new TimeControlPanel(timeEngine);
 
 const satControl = new SatelliteControlPanel({
     onGroupChange: async (group) => {
@@ -112,6 +113,7 @@ const satControl = new SatelliteControlPanel({
             }
         } catch (err) {
             satControl.setStatus(`Error: ${err.message}`, true);
+            console.error('[Satellites] Load failed:', err);
         }
     },
     onVisibilityChange: (v) => satelliteRenderer.setVisible(v),
@@ -127,7 +129,7 @@ const satControl = new SatelliteControlPanel({
     },
 });
 
-// ─── State ───────────────────────────────────────────────────────────────────
+// ─── Earth-layer Toggle State ─────────────────────────────────────────────────
 
 let earthSpinning = true;
 let showCities    = true;
@@ -153,16 +155,21 @@ function animate() {
 
     if (earthSpinning) earth.rotation.y += 0.0012;
 
+    // Capital city hover
     const hoveredCity = hoverSystem.update(earth, showCities);
     if (hoveredCity) infoPanel.show(hoveredCity.userData);
-    else infoPanel.hide();
+    else             infoPanel.hide();
 
-    const { hoveredId } = satelliteRenderer.raycast(camera);
-    if (hoveredId) {
-        const sat = satelliteModule.getById(hoveredId);
-        if (sat) satTooltip.show(sat);
-    } else {
-        satTooltip.hide();
+    // Satellite hover — only raycast when satellites are loaded
+    if (satelliteModule.count > 0) {
+        const { hoveredId } = satelliteRenderer.raycast(camera);
+        if (hoveredId) {
+            const sat = satelliteModule.getById(hoveredId);
+            if (sat) satTooltip.show(sat);
+            else     satTooltip.hide();
+        } else {
+            satTooltip.hide();
+        }
     }
 
     controls.update();

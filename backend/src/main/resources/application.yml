@@ -4,20 +4,7 @@ spring:
   cache:
     type: caffeine
     caffeine:
-      spec: maximumSize=50,expireAfterWrite=6h
-  datasource:
-    url: jdbc:postgresql://localhost:5432/digital_universe
-    username: ${DB_USER:universe}
-    password: ${DB_PASS:universe}
-    hikari:
-      maximum-pool-size: 10
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+      spec: maximumSize=10,expireAfterWrite=6h
 
 server:
   port: 8080
@@ -26,7 +13,7 @@ server:
 
 logging:
   level:
-    com.universe: INFO
+    com.universe_view: INFO
 
 springdoc:
   api-docs:

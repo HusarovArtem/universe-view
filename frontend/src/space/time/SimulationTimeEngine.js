@@ -9,20 +9,11 @@ export const TimeSpeed = Object.freeze({
     REWIND_100: -100,
 });
 
-/**
- * Centralized simulation clock. All time-dependent systems subscribe here.
- * Decoupled from wall-clock via an accumulator; speed multiplier applies uniformly.
- */
 export class SimulationTimeEngine {
-    /** @type {number} current simulation time in ms since epoch */
     #simTimeMs;
-    /** @type {number} wall-clock ms at last tick */
     #lastWallMs;
-    /** @type {number} speed multiplier (0 = paused, negative = rewind) */
     #speedMultiplier;
-    /** @type {boolean} */
     #running;
-    /** @type {Set<(simTimeMs: number, deltaMs: number) => void>} */
     #subscribers;
 
     constructor(startTimeMs = Date.now()) {
@@ -36,8 +27,7 @@ export class SimulationTimeEngine {
     get simTimeMs()       { return this.#simTimeMs; }
     get speedMultiplier() { return this.#speedMultiplier; }
     get isPaused()        { return this.#speedMultiplier === TimeSpeed.PAUSED; }
-
-    get simDate() { return new Date(this.#simTimeMs); }
+    get simDate()         { return new Date(this.#simTimeMs); }
 
     start() {
         if (this.#running) return;
@@ -56,6 +46,7 @@ export class SimulationTimeEngine {
 
     setSpeed(multiplier) {
         this.#speedMultiplier = multiplier;
+        if (multiplier !== TimeSpeed.PAUSED && !this.#running) this.start();
     }
 
     setSimTime(ms) {
@@ -63,12 +54,13 @@ export class SimulationTimeEngine {
         this.#notify(0);
     }
 
-    /** Call once per animation frame with current performance.now() */
     tick(wallMs = performance.now()) {
         if (!this.#running) return;
+
         const wallDeltaMs = wallMs - this.#lastWallMs;
         this.#lastWallMs  = wallMs;
 
+        // Always advance lastWallMs, but only notify when actually moving
         if (this.#speedMultiplier === TimeSpeed.PAUSED) return;
 
         const simDeltaMs  = wallDeltaMs * this.#speedMultiplier;

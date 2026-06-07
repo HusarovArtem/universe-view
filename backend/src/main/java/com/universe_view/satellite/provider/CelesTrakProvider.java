@@ -15,14 +15,18 @@ public class CelesTrakProvider implements SatelliteProvider {
 
     private static final Logger log = LoggerFactory.getLogger(CelesTrakProvider.class);
 
-    private static final String BASE_URL = "https://celestrak.org/SOCRATES/query.php";
+    // Correct CelesTrak GP catalog endpoint — NOT SOCRATES (conjunction analysis)
+    // Doc: https://celestrak.org/NORAD/documentation/gp-data-formats.php
+    // Pattern: https://celestrak.org/NORAD/elements/gp.php?GROUP=<group>&FORMAT=TLE
+    //          https://celestrak.org/NORAD/elements/gp.php?CATNR=<id>&FORMAT=TLE
+    private static final String GP_BASE = "https://celestrak.org/NORAD/elements/gp.php";
 
     private static final Map<String, String> GROUP_URLS = Map.of(
-            "active",   "https://celestrak.org/SOCRATES/query.php?GROUP=active&FORMAT=TLE",
-            "iss",      "https://celestrak.org/SOCRATES/query.php?CATNR=25544&FORMAT=TLE",
-            "starlink", "https://celestrak.org/SOCRATES/query.php?GROUP=starlink&FORMAT=TLE",
-            "weather",  "https://celestrak.org/SOCRATES/query.php?GROUP=weather&FORMAT=TLE",
-            "gps",      "https://celestrak.org/SOCRATES/query.php?GROUP=gps-ops&FORMAT=TLE"
+            "active",   GP_BASE + "?GROUP=ACTIVE&FORMAT=TLE",
+            "iss",      GP_BASE + "?CATNR=25544&FORMAT=TLE",
+            "starlink", GP_BASE + "?GROUP=STARLINK&FORMAT=TLE",
+            "weather",  GP_BASE + "?GROUP=WEATHER&FORMAT=TLE",
+            "gps",      GP_BASE + "?GROUP=GPS-OPS&FORMAT=TLE"
     );
 
     private static final Map<String, SpaceObjectCategory> GROUP_CATEGORIES = Map.of(
@@ -36,40 +40,30 @@ public class CelesTrakProvider implements SatelliteProvider {
     private final RestClient restClient;
 
     public CelesTrakProvider(RestClient.Builder builder) {
-        this.restClient = builder.build();
+        this.restClient = builder
+                .defaultHeader("User-Agent", "UniverseView/1.0 (educational project)")
+                .defaultHeader("Accept", "text/plain,text/html,*/*")
+                .build();
     }
 
-    @Override
-    public List<Satellite> fetchActive() {
-        return fetch("active");
-    }
-
-    @Override
-    public List<Satellite> fetchISS() {
-        return fetch("iss");
-    }
-
-    @Override
-    public List<Satellite> fetchStarlink() {
-        return fetch("starlink");
-    }
+    @Override public List<Satellite> fetchActive()   { return fetch("active"); }
+    @Override public List<Satellite> fetchISS()      { return fetch("iss"); }
+    @Override public List<Satellite> fetchStarlink() { return fetch("starlink"); }
 
     @Override
     public List<Satellite> fetchByGroup(String group) {
         if (!GROUP_URLS.containsKey(group)) {
-            throw new IllegalArgumentException("Unknown group: " + group);
+            throw new IllegalArgumentException("Unknown CelesTrak group: " + group);
         }
         return fetch(group);
     }
 
     @Override
-    public String getProviderName() {
-        return "CelesTrak";
-    }
+    public String getProviderName() { return "CelesTrak"; }
 
     private List<Satellite> fetch(String group) {
-        String url      = GROUP_URLS.get(group);
-        SpaceObjectCategory category = GROUP_CATEGORIES.getOrDefault(group, SpaceObjectCategory.OTHER_SATELLITE);
+        String url              = GROUP_URLS.get(group);
+        SpaceObjectCategory cat = GROUP_CATEGORIES.getOrDefault(group, SpaceObjectCategory.OTHER_SATELLITE);
 
         log.info("Fetching TLEs from CelesTrak group={} url={}", group, url);
 
@@ -83,7 +77,7 @@ public class CelesTrakProvider implements SatelliteProvider {
             return List.of();
         }
 
-        List<Satellite> sats = TleParser.parse(tleText, category);
+        List<Satellite> sats = TleParser.parse(tleText, cat);
         log.info("Parsed {} satellites for group={}", sats.size(), group);
         return sats;
     }

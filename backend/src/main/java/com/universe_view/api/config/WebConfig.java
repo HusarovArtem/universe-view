@@ -13,15 +13,19 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:5173", "http://localhost:3000")
+                .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "http://127.0.0.1:*"
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*");
+                .allowedHeaders("*")
+                .maxAge(3600);
     }
 
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI().info(new Info()
-                .title("Digital Universe API")
+                .title("Universe View API")
                 .version("1.0.0")
                 .description("Real-time satellite tracking and orbital mechanics platform"));
     }
