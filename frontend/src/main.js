@@ -1,60 +1,202 @@
-import './style.css'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.js'
+import * as THREE from 'three';
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+import { createScene } from './core/scene.js';
+import { createCamera } from './core/camera.js';
+import { createRenderer } from './core/renderer.js';
 
-<div class="ticks"></div>
+import { createEarth } from './earth/Earth.js';
+import { addCity } from './earth/cities.js';
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+import capitals from './data/capitals.json';
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import {createCountryBorders} from "./earth/countryBorders.js";
 
-setupCounter(document.querySelector('#counter'))
+//
+// ==========================
+// 🌍 SETUP
+// ==========================
+//
+
+const scene = createScene();
+const camera = createCamera();
+const renderer = createRenderer();
+
+camera.position.set(0, 0, 12);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.enableZoom = true;
+
+//
+// ==========================
+// 🌍 EARTH
+// ==========================
+//
+
+const earth = createEarth();
+scene.add(earth);
+
+const borders = createCountryBorders();
+earth.add(borders);
+
+let earthSpinning = true;
+let showCities = true;
+
+//
+// ==========================
+// 📍 CITIES GROUP (IMPORTANT FIX)
+// ==========================
+//
+
+const citiesGroup = new THREE.Group();
+earth.add(citiesGroup);
+
+const cityObjects = [];
+
+const CITY_RADIUS = 5.02;
+
+capitals.forEach((city) => {
+    const obj = addCity(citiesGroup, city, CITY_RADIUS);
+
+    obj.userData = {
+        name: city.name,
+        lat: city.lat,
+        lon: city.lon
+    };
+
+    cityObjects.push(obj);
+});
+
+//
+// ==========================
+// 🖱️ MOUSE + RAYCASTER FIX
+// ==========================
+//
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+let hovered = null;
+
+window.addEventListener('mousemove', (event) => {up
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
+function updateHover() {
+    // 🔥 IMPORTANT: force matrix update BEFORE raycast
+    earth.updateMatrixWorld(true);
+    citiesGroup.updateMatrixWorld(true);
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(cityObjects, true);
+
+    if (intersects.length > 0 && showCities) {
+        const obj = intersects[0].object;
+
+        if (hovered !== obj) {
+            if (hovered) {
+                hovered.material.color.set(0xff4444);
+                hovered.scale.set(1, 1, 1);
+            }
+
+            hovered = obj;
+
+            hovered.material.color.set(0x00ffcc);
+            hovered.scale.set(1.6, 1.6, 1.6);
+        }
+    } else {
+        if (hovered) {
+            hovered.material.color.set(0xff4444);
+            hovered.scale.set(1, 1, 1);
+            hovered = null;
+        }
+    }
+}
+
+//
+// ==========================
+// 🎛️ UI TOGGLES (CHECKBOXES)
+// ==========================
+//
+
+const ui = document.createElement('div');
+
+ui.style.position = 'absolute';
+ui.style.top = '12px';
+ui.style.right = '12px';
+ui.style.zIndex = '9999';
+
+ui.style.color = 'white';
+ui.style.background = 'rgba(0,0,0,0.55)';
+ui.style.padding = '12px 14px';
+ui.style.borderRadius = '10px';
+ui.style.backdropFilter = 'blur(10px)';
+ui.style.fontFamily = 'sans-serif';
+ui.style.fontSize = '13px';
+
+ui.innerHTML = `
+  <label>
+    <input type="checkbox" id="spinToggle" checked />
+    Earth spinning
+  </label>
+  <br/><br/>
+  <label>
+    <input type="checkbox" id="citiesToggle" checked />
+    Show capitals
+  </label>
+`;
+
+document.body.appendChild(ui);
+
+//
+// ==========================
+// 🎛️ UI LOGIC
+// ==========================
+//
+
+document.getElementById('spinToggle').addEventListener('change', (e) => {
+    earthSpinning = e.target.checked;
+});
+
+document.getElementById('citiesToggle').addEventListener('change', (e) => {
+    showCities = e.target.checked;
+
+    citiesGroup.visible = showCities;
+});
+
+//
+// ==========================
+// 🌍 ANIMATION LOOP
+// ==========================
+//
+
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (earthSpinning) {
+        earth.rotation.y += 0.0015;
+    }
+
+    updateHover();
+
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+animate();
+
+//
+// ==========================
+// 📏 RESIZE
+// ==========================
+//
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
