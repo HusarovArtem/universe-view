@@ -7,7 +7,7 @@ src/
 ├── core/           # Pure Three.js setup (scene, camera, renderer)
 ├── earth/          # Earth-specific modules
 │   ├── Earth.js        — surface mesh + atmosphere
-│   ├── cities.js       — capital markers (add/highlight/reset)
+│   ├── Cities.js       — capital markers (add/highlight/reset)
 │   ├── countryBorders.js — GeoJSON → LineSegments
 ├── objects/        # 🚀 Future: Sun, Moon, planets, satellites
 │   └── (empty — add CelestialBody.js here in Stage 3)

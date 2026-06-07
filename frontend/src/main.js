@@ -1,142 +1,168 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-import { createScene }   from './core/scene.js';
-import { createCamera }  from './core/camera.js';
+import { createScene }    from './core/scene.js';
+import { createCamera }   from './core/camera.js';
 import { createRenderer } from './core/renderer.js';
 
-import { createEarth, setAtmosphereVisible } from './earth/Earth.js';
-import { createCountryBorders }              from './earth/CountryBorders.js';
-import { addCity }                           from './earth/cities.js';
+import { createEarth, setAtmosphereVisible } from './space/objects/earth/Earth.js';
+import { createCountryBorders }              from './space/objects/earth/CountryBorders.js';
+import { addCity }                           from './space/objects/earth/Cities.js';
 
 import { HoverSystem } from './ui/HoverSystem.js';
 import { InfoPanel }   from './ui/InfoPanel.js';
 
+import { SimulationTimeEngine } from './space/time/SimulationTimeEngine.js';
+import { SatelliteModule }      from './space/objects/satellite/SatelliteModule.js';
+import { SatelliteRenderer }    from './space/visualization/SatelliteRenderer.js';
+import { OrbitRenderer }        from './space/visualization/OrbitRenderer.js';
+
+import { TimeControlPanel }      from './ui/controls/TimeControlPanel.js';
+import { SatelliteControlPanel } from './ui/controls/SatelliteControlPanel.js';
+import { SatelliteTooltip }      from './ui/panels/SatelliteTooltip.js';
+
 import capitals from './data/capitals.json';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RENDERER / SCENE / CAMERA
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Core ────────────────────────────────────────────────────────────────────
 
 const scene    = createScene();
 const camera   = createCamera();
 const renderer = createRenderer();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LIGHTING
-// Lights go in the scene, not inside Earth, so they illuminate everything.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Lighting ────────────────────────────────────────────────────────────────
 
 const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.6);
 sunLight.position.set(50, 30, 80);
 scene.add(sunLight);
+scene.add(new THREE.AmbientLight(0x112244, 0.9));
 
-// Faint ambient so the dark side isn't pitch-black
-const ambientLight = new THREE.AmbientLight(0x112244, 0.9);
-scene.add(ambientLight);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EARTH
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Earth ───────────────────────────────────────────────────────────────────
 
 const earth = createEarth();
 scene.add(earth);
 
-// Country borders (async — loaded from GeoJSON)
 createCountryBorders().then((borders) => {
     if (borders) {
         earth.add(borders);
-        // Wire up toggle AFTER borders exist
         document.getElementById('bordersToggle').addEventListener('change', (e) => {
             borders.visible = e.target.checked;
         });
     } else {
-        // No borders loaded — disable the toggle
         const toggle = document.getElementById('bordersToggle');
         toggle.disabled = true;
         toggle.closest('.toggle-row').style.opacity = '0.3';
     }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CITY MARKERS
-// All markers live inside a group that is a child of the earth group,
-// so they rotate with the globe automatically.
-// ─────────────────────────────────────────────────────────────────────────────
-
 const citiesGroup = new THREE.Group();
 citiesGroup.name  = 'CitiesGroup';
 earth.add(citiesGroup);
-
-/** @type {THREE.Mesh[]} */
 const cityMeshes = capitals.map((city) => addCity(citiesGroup, city));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ORBIT CONTROLS
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Simulation Time ─────────────────────────────────────────────────────────
+
+const timeEngine = new SimulationTimeEngine(Date.now());
+timeEngine.play(1);
+
+// ─── Satellite Systems ───────────────────────────────────────────────────────
+
+const satelliteModule   = new SatelliteModule(timeEngine);
+const satelliteRenderer = new SatelliteRenderer(scene, renderer.domElement);
+const orbitRenderer     = new OrbitRenderer(scene);
+
+let orbitsEnabled = false;
+
+satelliteModule.onUpdate((satellites) => {
+    satelliteRenderer.update(satellites);
+});
+
+// ─── Controls ────────────────────────────────────────────────────────────────
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping    = true;
-controls.dampingFactor    = 0.06;
-controls.enableZoom       = true;
-controls.minDistance      = 6.5;   // can't clip inside earth
-controls.maxDistance      = 60;
-controls.enablePan        = false;
-controls.rotateSpeed      = 0.5;
-controls.zoomSpeed        = 0.8;
+controls.enableDamping  = true;
+controls.dampingFactor  = 0.06;
+controls.enableZoom     = true;
+controls.minDistance    = 6.5;
+controls.maxDistance    = 120;
+controls.enablePan      = false;
+controls.rotateSpeed    = 0.5;
+controls.zoomSpeed      = 0.8;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UI SYSTEMS
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── UI Systems ──────────────────────────────────────────────────────────────
 
-const hoverSystem = new HoverSystem(camera, renderer.domElement);
+const hoverSystem    = new HoverSystem(camera, renderer.domElement);
 hoverSystem.setTargets(cityMeshes);
 
-const infoPanel = new InfoPanel();
+const infoPanel      = new InfoPanel();
+const satTooltip     = new SatelliteTooltip();
+const timeControl    = new TimeControlPanel(timeEngine);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────────────────────────────────────
+const satControl = new SatelliteControlPanel({
+    onGroupChange: async (group) => {
+        satControl.setStatus('Loading…');
+        try {
+            const n = await satelliteModule.load(group);
+            satControl.setCount(n);
+            satControl.setStatus(`Loaded ${n} satellites`);
+            if (orbitsEnabled) {
+                orbitRenderer.dispose();
+                for (const sat of satelliteModule.satellites.values()) {
+                    orbitRenderer.showOrbit(sat, timeEngine.simTimeMs);
+                }
+            }
+        } catch (err) {
+            satControl.setStatus(`Error: ${err.message}`, true);
+        }
+    },
+    onVisibilityChange: (v) => satelliteRenderer.setVisible(v),
+    onOrbitToggle: (enabled) => {
+        orbitsEnabled = enabled;
+        if (enabled) {
+            for (const sat of satelliteModule.satellites.values()) {
+                orbitRenderer.showOrbit(sat, timeEngine.simTimeMs);
+            }
+        } else {
+            orbitRenderer.dispose();
+        }
+    },
+});
+
+// ─── State ───────────────────────────────────────────────────────────────────
 
 let earthSpinning = true;
 let showCities    = true;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UI CONTROL WIRING
-// ─────────────────────────────────────────────────────────────────────────────
-
 document.getElementById('spinToggle').addEventListener('change', (e) => {
     earthSpinning = e.target.checked;
 });
-
 document.getElementById('citiesToggle').addEventListener('change', (e) => {
-    showCities             = e.target.checked;
-    citiesGroup.visible    = showCities;
+    showCities          = e.target.checked;
+    citiesGroup.visible = showCities;
     if (!showCities) infoPanel.hide();
 });
-
 document.getElementById('atmosphereToggle').addEventListener('change', (e) => {
     setAtmosphereVisible(earth, e.target.checked);
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ANIMATION LOOP
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Animation Loop ──────────────────────────────────────────────────────────
 
 function animate() {
     requestAnimationFrame(animate);
 
-    if (earthSpinning) {
-        earth.rotation.y += 0.0012;
-    }
+    timeEngine.tick(performance.now());
 
-    // Hover detection
-    const hoveredMesh = hoverSystem.update(earth, showCities);
+    if (earthSpinning) earth.rotation.y += 0.0012;
 
-    if (hoveredMesh) {
-        infoPanel.show(hoveredMesh.userData);
+    const hoveredCity = hoverSystem.update(earth, showCities);
+    if (hoveredCity) infoPanel.show(hoveredCity.userData);
+    else infoPanel.hide();
+
+    const { hoveredId } = satelliteRenderer.raycast(camera);
+    if (hoveredId) {
+        const sat = satelliteModule.getById(hoveredId);
+        if (sat) satTooltip.show(sat);
     } else {
-        infoPanel.hide();
+        satTooltip.hide();
     }
 
     controls.update();
@@ -145,9 +171,7 @@ function animate() {
 
 animate();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RESIZE
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Resize ──────────────────────────────────────────────────────────────────
 
 window.addEventListener('resize', () => {
     camera.updateAspect(window.innerWidth, window.innerHeight);

@@ -1,0 +1,204 @@
+/* =========================
+   SATELLITE TOOLTIP
+========================= */
+.sat-tooltip {
+  position: fixed;
+  pointer-events: none;
+  z-index: 300;
+  background: rgba(4, 10, 24, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 224, 0.3);
+  border-radius: 3px;
+  padding: 10px 14px;
+  min-width: 180px;
+  box-shadow: 0 0 24px rgba(0, 255, 224, 0.08);
+  transition: opacity 0.12s ease;
+}
+
+.sat-tooltip.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sat-tooltip-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: rgba(0, 255, 224, 0.6);
+  margin-bottom: 6px;
+}
+
+.sat-tooltip-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #e8f0ff;
+  margin-bottom: 8px;
+  line-height: 1.35;
+}
+
+.sat-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(180, 200, 255, 0.5);
+  padding: 3px 0;
+  border-top: 1px solid rgba(80, 160, 255, 0.08);
+}
+
+.sat-tooltip-row span:last-child {
+  color: #00ffe0;
+}
+
+/* =========================
+   TIME CONTROL PANEL
+========================= */
+.time-control-panel {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(4, 10, 24, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(80, 160, 255, 0.12);
+  border-radius: 4px;
+  padding: 10px 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 360px;
+}
+
+.tc-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #e8f0ff;
+}
+
+.tc-speed-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(180, 200, 255, 0.4);
+}
+
+.tc-speed-label span {
+  color: #4d9fff;
+}
+
+.tc-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.tc-btn {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  background: rgba(80, 160, 255, 0.05);
+  border: 1px solid rgba(80, 160, 255, 0.15);
+  color: rgba(180, 200, 255, 0.5);
+  padding: 4px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tc-btn:hover {
+  background: rgba(80, 160, 255, 0.15);
+  color: #e8f0ff;
+  border-color: rgba(80, 160, 255, 0.35);
+}
+
+.tc-btn.active {
+  background: rgba(77, 159, 255, 0.2);
+  border-color: #4d9fff;
+  color: #4d9fff;
+  box-shadow: 0 0 8px rgba(77, 159, 255, 0.3);
+}
+
+/* =========================
+   SATELLITE CONTROLS PANEL
+========================= */
+.satellite-controls-panel {
+  position: fixed;
+  bottom: 110px;
+  left: 20px;
+  width: 200px;
+  padding: 14px 16px;
+  background: rgba(4, 10, 24, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(80, 160, 255, 0.12);
+  border-radius: 4px;
+  z-index: 100;
+}
+
+.sc-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(180, 200, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.sc-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #00ffe0;
+  margin-bottom: 10px;
+}
+
+.sc-group-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(180, 200, 255, 0.4);
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+
+.sc-select {
+  width: 100%;
+  background: rgba(4, 10, 24, 0.9);
+  border: 1px solid rgba(80, 160, 255, 0.25);
+  color: #e8f0ff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 5px 8px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.sc-load-btn {
+  width: 100%;
+  background: rgba(77, 159, 255, 0.1);
+  border: 1px solid rgba(77, 159, 255, 0.35);
+  color: #4d9fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 6px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sc-load-btn:hover {
+  background: rgba(77, 159, 255, 0.2);
+  box-shadow: 0 0 12px rgba(77, 159, 255, 0.3);
+}
+
+.sc-status {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: rgba(180, 200, 255, 0.4);
+  margin-top: 8px;
+  min-height: 12px;
+}

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { latLonToVector3 } from '../utils/latlon.js';
+import { latLonToVector3 } from '../../../utils/latlon.js';
 import { EARTH_RADIUS } from './Earth.js';
 
 // Sit slightly above the surface to avoid z-fighting

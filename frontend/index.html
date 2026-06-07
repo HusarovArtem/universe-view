@@ -11,16 +11,17 @@
           rel="stylesheet"
   />
   <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/src/style-satellites.css" />
 </head>
 <body>
 <!-- HUD Top Bar -->
 <div id="hud">
   <h1 class="hud-title">UNIVERSE <span class="accent">VIEW</span></h1>
-  <div id="hud-time" class="hud-time">STAGE I — EARTH</div>
+  <div id="hud-time" class="hud-time">STAGE II — SATELLITES</div>
   <div id="hud-coords" class="hud-coords">LAT — / LON —</div>
 </div>
 
-<!-- Info Panel (right side) -->
+<!-- Info Panel (right side) — capitals -->
 <div id="infoPanel" class="hidden">
   <div class="info-tag">LOCATION</div>
   <h2 id="infoName">—</h2>
@@ -67,11 +68,11 @@
   </label>
 </div>
 
-<!-- Stage indicator (bottom right - for future stages) -->
+<!-- Stage indicator (bottom right) -->
 <div id="stageIndicator">
-  <div class="stage active" data-stage="0">STAGE 0</div>
-  <div class="stage active" data-stage="1">STAGE 1</div>
-  <div class="stage upcoming" data-stage="2">STAGE 2</div>
+  <div class="stage active"   data-stage="0">STAGE 0</div>
+  <div class="stage active"   data-stage="1">STAGE 1</div>
+  <div class="stage active"   data-stage="2">STAGE 2</div>
   <div class="stage upcoming" data-stage="3">STAGE 3</div>
 </div>
 

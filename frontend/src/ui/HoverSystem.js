@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { highlightCity, resetCity } from '../earth/cities.js';
+import { highlightCity, resetCity } from '../space/objects/earth/Cities.js';
 
 /**
  * Manages mouse hover detection over a list of meshes using raycasting.
