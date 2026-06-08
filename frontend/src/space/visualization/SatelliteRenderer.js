@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SatelliteCategory } from '../core/Satellite.js';
+import { SatelliteCategory } from '../objects/satellite/Satellite.js';
 
 const CATEGORY_COLORS = {
     [SatelliteCategory.ISS]:      0x00ffe0,

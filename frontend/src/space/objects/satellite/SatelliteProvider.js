@@ -1,4 +1,4 @@
-import { Satellite, OrbitalElements, SatelliteCategory } from '../../core/Satellite.js';
+import { Satellite, OrbitalElements, SatelliteCategory } from './Satellite.js';
 
 export class SatelliteProvider {
     async fetchActive()       { throw new Error('Not implemented'); }

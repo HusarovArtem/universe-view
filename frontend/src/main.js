@@ -17,6 +17,12 @@ import { SatelliteModule }      from './space/objects/satellite/SatelliteModule.
 import { SatelliteRenderer }    from './space/visualization/SatelliteRenderer.js';
 import { OrbitRenderer }        from './space/visualization/OrbitRenderer.js';
 
+// ─── Moon ─────────────────────────────────────────────────────────────────────
+// The Moon module is self-contained: createMoon() subscribes to the time engine
+// and drives its own position + tidal-lock rotation every tick.
+// disposeMoon() must be called if the scene is ever torn down.
+import { createMoon, disposeMoon } from './space/objects/moon/Moon.js';
+
 import { TimeControlPanel }      from './ui/controls/TimeControlPanel.js';
 import { SatelliteControlPanel } from './ui/controls/SatelliteControlPanel.js';
 import { SatelliteTooltip }      from './ui/panels/SatelliteTooltip.js';
@@ -30,6 +36,14 @@ const camera   = createCamera();
 const renderer = createRenderer();
 
 // ─── Lighting ────────────────────────────────────────────────────────────────
+// sunLight is the single directional light that illuminates BOTH Earth and Moon.
+// Its position defines the "Sun direction" in scene space. Moving it or changing
+// its intensity will simultaneously affect Earth atmosphere shading and Moon
+// phase geometry — physically correct because both bodies share one star.
+//
+// Current position (50, 30, 80) places the sun somewhat to the right, above,
+// and behind the camera's default view. Phases visible from the default camera
+// will depend on this direction relative to the Moon's orbital position.
 
 const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.6);
 sunLight.position.set(50, 30, 80);
@@ -64,6 +78,42 @@ const cityMeshes = capitals.map((city) => addCity(citiesGroup, city));
 const timeEngine = new SimulationTimeEngine(Date.now());
 timeEngine.play(1);
 
+// ─── Moon ─────────────────────────────────────────────────────────────────────
+// Moon is added to the scene ROOT — not parented under Earth.
+//
+// Why this matters:
+//   Earth rotates every frame (earth.rotation.y += 0.0012). If the Moon were
+//   a child of Earth, it would spin with it at an enormous apparent velocity,
+//   which is physically wrong. Parenting also makes the Moon's position
+//   camera-relative in unexpected ways.
+//
+//   Instead, the Moon's position is computed in ECI (Earth-centred inertial)
+//   space by LunarOrbit.computeLunarState() — the same coordinate frame that
+//   satellite positions use — and converted to scene-space world coordinates.
+//   Earth sits at scene origin (0,0,0) so ECI ≡ scene-centred for our purposes.
+//
+// The createMoon() call internally subscribes to timeEngine. No external update
+// call is needed in the animation loop.
+
+const moon = createMoon(timeEngine);
+scene.add(moon);
+
+// ─── Orbit Controls ──────────────────────────────────────────────────────────
+// maxDistance increased from 120 → 500 so the user can zoom out enough to
+// see the Moon in its orbit. At default zoom the Moon is ~60 scene units away;
+// the old maxDistance of 120 allowed it but left little margin. 500 is still
+// well within the scene's far plane (2000) and the star sphere (~400).
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping  = true;
+controls.dampingFactor  = 0.06;
+controls.enableZoom     = true;
+controls.minDistance    = 6.5;
+controls.maxDistance    = 500;   // extended from 120 to allow Moon viewing
+controls.enablePan      = false;
+controls.rotateSpeed    = 0.5;
+controls.zoomSpeed      = 0.8;
+
 // ─── Satellite Systems ───────────────────────────────────────────────────────
 
 const satelliteModule   = new SatelliteModule(timeEngine);
@@ -75,18 +125,6 @@ let orbitsEnabled = false;
 satelliteModule.onUpdate((satellites) => {
     satelliteRenderer.update(satellites);
 });
-
-// ─── Orbit Controls ──────────────────────────────────────────────────────────
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping  = true;
-controls.dampingFactor  = 0.06;
-controls.enableZoom     = true;
-controls.minDistance    = 6.5;
-controls.maxDistance    = 120;
-controls.enablePan      = false;
-controls.rotateSpeed    = 0.5;
-controls.zoomSpeed      = 0.8;
 
 // ─── UI Systems ──────────────────────────────────────────────────────────────
 
@@ -147,6 +185,10 @@ document.getElementById('atmosphereToggle').addEventListener('change', (e) => {
 });
 
 // ─── Animation Loop ──────────────────────────────────────────────────────────
+// NOTE: Moon position + rotation are driven entirely through timeEngine.subscribe()
+// inside Moon.js. No per-frame Moon update call is needed here. This keeps the
+// animation loop clean and ensures the Moon updates even when paused (it gets
+// a tick(0) notification so it can correctly hold its position).
 
 function animate() {
     requestAnimationFrame(animate);
@@ -185,3 +227,7 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
+
+// ─── Scene cleanup (if ever needed) ─────────────────────────────────────────
+// Exposed on window for debugging / hot-module-replacement scenarios.
+window.__disposeMoon = () => disposeMoon(moon);

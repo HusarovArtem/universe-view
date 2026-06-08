@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { KeplerPropagator } from '../orbit/KeplerPropagator.js';
-import { SatelliteCategory } from '../core/Satellite.js';
+import { SatelliteCategory } from '../objects/satellite/Satellite.js';
 
 const ORBIT_COLORS = {
     [SatelliteCategory.ISS]:      0x00ffe0,
@@ -33,7 +33,7 @@ export class OrbitRenderer {
 
     /**
      * Show orbit for a specific satellite.
-     * @param {import('../core/Satellite.js').Satellite} sat
+     * @param {import('../objects/satellite/Satellite.js').Satellite} sat
      * @param {number} simTimeMs
      */
     showOrbit(sat, simTimeMs) {
@@ -66,7 +66,7 @@ export class OrbitRenderer {
 
     /**
      * Redraw all active orbits at new sim time (call when time jumps).
-     * @param {Map<string, import('../core/Satellite.js').Satellite>} satellites
+     * @param {Map<string, import('../objects/satellite/Satellite.js').Satellite>} satellites
      * @param {number} simTimeMs
      */
     refreshAll(satellites, simTimeMs) {
