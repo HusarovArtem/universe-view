@@ -1,45 +1,48 @@
 import * as THREE from 'three';
-import { highlightCity, resetCity } from '../space/objects/earth/Cities.js';
 
 /**
- * Manages mouse hover detection over a list of meshes using raycasting.
+ * Generic hover detection over a list of meshes via raycasting.
+ *
+ * Body-agnostic: instead of hardcoding highlightCity/resetCity, the caller
+ * supplies onEnter / onLeave callbacks (or they default to no-op).
  *
  * Usage:
- *   const hover = new HoverSystem(camera, renderer.domElement);
- *   hover.addTargets(cityMeshArray);
+ *   const hover = new HoverSystem(camera, domElement, {
+ *       onEnter: mesh => highlightCity(mesh),
+ *       onLeave: mesh => resetCity(mesh),
+ *   });
+ *   hover.setTargets(cityMeshArray);
  *   // in animation loop:
- *   const hit = hover.update(earthGroup);
+ *   const hit = hover.update(rootGroup, enabled);
  */
 export class HoverSystem {
-    /** @type {THREE.Camera} */
     #camera;
-    /** @type {HTMLElement} */
     #domElement;
-    /** @type {THREE.Raycaster} */
     #raycaster;
-    /** @type {THREE.Vector2} */
     #mouse;
-    /** @type {THREE.Mesh|null} */
-    #hovered = null;
-    /** @type {THREE.Mesh[]} */
-    #targets = [];
-    /** @type {Function[]} */
+    #hovered  = null;
+    #targets  = [];
     #listeners = [];
+    #onEnter;
+    #onLeave;
 
     /**
-     * @param {THREE.Camera} camera
-     * @param {HTMLElement} domElement
+     * @param {THREE.Camera}  camera
+     * @param {HTMLElement}   domElement
+     * @param {{ onEnter?: (mesh: THREE.Mesh) => void, onLeave?: (mesh: THREE.Mesh) => void }} [callbacks]
      */
-    constructor(camera, domElement) {
+    constructor(camera, domElement, callbacks = {}) {
         this.#camera     = camera;
         this.#domElement = domElement;
         this.#raycaster  = new THREE.Raycaster();
         this.#raycaster.params.Points.threshold = 0.1;
-        this.#mouse      = new THREE.Vector2(-9999, -9999); // offscreen until first move
+        this.#mouse      = new THREE.Vector2(-9999, -9999);
+        this.#onEnter    = callbacks.onEnter ?? (() => {});
+        this.#onLeave    = callbacks.onLeave ?? (() => {});
 
         const onMove = (e) => {
             const rect = domElement.getBoundingClientRect();
-            this.#mouse.x = ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+            this.#mouse.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
             this.#mouse.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
         };
 
@@ -47,49 +50,39 @@ export class HoverSystem {
         this.#listeners.push(() => domElement.removeEventListener('mousemove', onMove));
     }
 
-    /**
-     * Replace all hover targets.
-     * @param {THREE.Mesh[]} targets
-     */
-    setTargets(targets) {
-        this.#targets = targets;
-    }
+    /** Replace all hover targets. */
+    setTargets(targets) { this.#targets = targets; }
 
     /**
      * Run hover detection. Call once per animation frame.
-     * Forces matrix updates on the given root object before raycasting.
-     *
-     * @param {THREE.Object3D} root - the object whose world matrices need updating
-     * @param {boolean} enabled     - if false, clears any active hover and returns null
-     * @returns {THREE.Mesh|null}   - currently hovered mesh, or null
+     * @param {THREE.Object3D} root  - object whose world matrices need updating
+     * @param {boolean}        enabled
+     * @returns {THREE.Mesh|null}
      */
     update(root, enabled = true) {
         if (!enabled) {
             if (this.#hovered) {
-                resetCity(this.#hovered);
+                this.#onLeave(this.#hovered);
                 this.#hovered = null;
             }
             return null;
         }
 
-        // IMPORTANT: force world matrix update before casting
         root.updateMatrixWorld(true);
 
         this.#raycaster.setFromCamera(this.#mouse, this.#camera);
         const hits = this.#raycaster.intersectObjects(this.#targets, false);
-
-        const hit = hits.length > 0 ? hits[0].object : null;
+        const hit  = hits.length > 0 ? hits[0].object : null;
 
         if (hit !== this.#hovered) {
-            if (this.#hovered) resetCity(this.#hovered);
+            if (this.#hovered) this.#onLeave(this.#hovered);
             this.#hovered = hit;
-            if (this.#hovered) highlightCity(this.#hovered);
+            if (this.#hovered) this.#onEnter(this.#hovered);
         }
 
         return this.#hovered;
     }
 
-    /** Clean up event listeners */
     dispose() {
         this.#listeners.forEach(fn => fn());
         this.#listeners = [];

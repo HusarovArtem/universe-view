@@ -7,21 +7,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-          href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500&display=swap"
-          rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500&display=swap"
+    rel="stylesheet"
   />
   <link rel="stylesheet" href="/src/style.css" />
   <link rel="stylesheet" href="/src/style-satellites.css" />
 </head>
 <body>
+
 <!-- HUD Top Bar -->
 <div id="hud">
   <h1 class="hud-title">UNIVERSE <span class="accent">VIEW</span></h1>
-  <div id="hud-time" class="hud-time">STAGE II — SATELLITES</div>
+  <div id="hud-time" class="hud-time">STAGE III — MULTI-BODY</div>
   <div id="hud-coords" class="hud-coords">LAT — / LON —</div>
 </div>
 
-<!-- Info Panel (right side) — capitals -->
+<!-- Info Panel (right side) — capitals (Earth cities) -->
 <div id="infoPanel" class="hidden">
   <div class="info-tag">LOCATION</div>
   <h2 id="infoName">—</h2>
@@ -35,9 +36,20 @@
   </div>
 </div>
 
+<!-- Lunar Settlement Tooltip -->
+<div id="settlementTooltip" style="display:none"></div>
+
 <!-- Controls Panel (bottom left) -->
 <div id="controlsPanel">
-  <div class="control-title">CONTROLS</div>
+  <div class="control-title">VIEW CONTROLS</div>
+
+  <!-- Focus buttons -->
+  <div class="focus-row">
+    <button class="focus-btn" id="focusEarth">⊕ EARTH</button>
+    <button class="focus-btn" id="focusMoon">☽ MOON</button>
+  </div>
+
+  <div class="control-section-title">EARTH</div>
   <label class="toggle-row">
     <div class="toggle-label">SPIN</div>
     <div class="toggle-wrapper">
@@ -66,6 +78,36 @@
       <span class="toggle-slider"></span>
     </div>
   </label>
+  <label class="toggle-row">
+    <div class="toggle-label">EARTH LABELS</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="earthLabelsToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+
+  <div class="control-section-title">MOON</div>
+  <label class="toggle-row">
+    <div class="toggle-label">MOON ORBIT</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="moonOrbitToggle" />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+  <label class="toggle-row">
+    <div class="toggle-label">MOON LABELS</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="moonLabelsToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
+  <label class="toggle-row">
+    <div class="toggle-label">LUNAR SITES</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="lunarSettlementsToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
 </div>
 
 <!-- Stage indicator (bottom right) -->
@@ -73,7 +115,7 @@
   <div class="stage active"   data-stage="0">STAGE 0</div>
   <div class="stage active"   data-stage="1">STAGE 1</div>
   <div class="stage active"   data-stage="2">STAGE 2</div>
-  <div class="stage upcoming" data-stage="3">STAGE 3</div>
+  <div class="stage active"   data-stage="3">STAGE 3</div>
 </div>
 
 <script type="module" src="/src/main.js"></script>

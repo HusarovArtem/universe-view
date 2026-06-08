@@ -54,9 +54,9 @@ canvas {
   justify-content: space-between;
   gap: 16px;
   background: linear-gradient(
-          to bottom,
-          rgba(0, 5, 15, 0.85) 0%,
-          rgba(0, 5, 15, 0.0) 100%
+    to bottom,
+    rgba(0, 5, 15, 0.85) 0%,
+    rgba(0, 5, 15, 0.0) 100%
   );
   border-bottom: 1px solid var(--border);
   z-index: 100;
@@ -71,9 +71,7 @@ canvas {
   color: var(--text-primary);
 }
 
-.hud-title .accent {
-  color: var(--accent);
-}
+.hud-title .accent { color: var(--accent); }
 
 .hud-time {
   font-family: var(--font-mono);
@@ -92,12 +90,93 @@ canvas {
 }
 
 /* =========================
+   CELESTIAL INFO PANEL
+   (top-right: primary panel for focused body)
+========================= */
+#celestialInfoPanel {
+  position: fixed;
+  right: 20px;
+  top: 70px;
+  width: 240px;
+  padding: 16px 18px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-bright);
+  border-radius: 4px;
+  z-index: 100;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 0 40px rgba(77, 159, 255, 0.06),
+              inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+#celestialInfoPanel.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+}
+
+.cbip-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+
+.cbip-name {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+}
+
+.cbip-type {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.cbip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+  gap: 8px;
+}
+
+.cbip-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cbip-value {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-hot);
+  text-align: right;
+  line-height: 1.4;
+}
+
+/* =========================
    INFO PANEL
+   (city/location hover — positioned BELOW the celestial panel)
 ========================= */
 #infoPanel {
   position: fixed;
   right: 20px;
-  top: 70px;
+  /* Pushed below the celestial info panel:
+     celestialInfoPanel top(70) + approx max height(260) + gap(12) = 342 */
+  top: 342px;
   width: 220px;
   padding: 16px 18px;
   background: var(--bg-panel);
@@ -107,7 +186,8 @@ canvas {
   border-radius: 4px;
   z-index: 100;
   transition: opacity 0.25s ease, transform 0.25s ease;
-  box-shadow: 0 0 40px rgba(77, 159, 255, 0.06), inset 0 0 0 1px rgba(255,255,255,0.03);
+  box-shadow: 0 0 40px rgba(77, 159, 255, 0.06),
+              inset 0 0 0 1px rgba(255,255,255,0.03);
 }
 
 #infoPanel.hidden {
@@ -162,7 +242,7 @@ canvas {
   position: fixed;
   bottom: 24px;
   left: 20px;
-  width: 200px;
+  width: 210px;
   padding: 14px 16px;
   background: var(--bg-panel);
   backdrop-filter: blur(16px);
@@ -181,6 +261,15 @@ canvas {
   margin-bottom: 12px;
 }
 
+.control-section-title {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  padding: 8px 0 4px;
+  opacity: 0.6;
+}
+
 .toggle-row {
   display: flex;
   justify-content: space-between;
@@ -190,9 +279,7 @@ canvas {
   border-top: 1px solid var(--border);
 }
 
-.toggle-row:hover .toggle-label {
-  color: var(--text-primary);
-}
+.toggle-row:hover .toggle-label { color: var(--text-primary); }
 
 .toggle-label {
   font-family: var(--font-mono);
@@ -203,7 +290,6 @@ canvas {
   user-select: none;
 }
 
-/* Toggle switch */
 .toggle-wrapper {
   position: relative;
   width: 32px;
@@ -251,6 +337,43 @@ canvas {
 }
 
 /* =========================
+   FOCUS BUTTONS
+========================= */
+.focus-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.focus-btn {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  background: rgba(80, 160, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.focus-btn:hover {
+  color: var(--accent);
+  border-color: var(--border-bright);
+  background: rgba(77, 159, 255, 0.12);
+}
+
+.focus-btn.active {
+  color: var(--accent-hot);
+  border-color: var(--accent-hot);
+  background: rgba(0, 255, 224, 0.08);
+}
+
+/* =========================
    STAGE INDICATOR
 ========================= */
 #stageIndicator {
@@ -287,24 +410,91 @@ canvas {
 /* =========================
    CURSOR — globe hover
 ========================= */
-body.hovering-city {
-  cursor: crosshair;
-}
+body.hovering-city { cursor: crosshair; }
 
 /* =========================
-   SCANLINE OVERLAY (aesthetic)
+   SCANLINE OVERLAY
 ========================= */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   background: repeating-linear-gradient(
-          to bottom,
-          transparent 0px,
-          transparent 3px,
-          rgba(0, 0, 0, 0.015) 3px,
-          rgba(0, 0, 0, 0.015) 4px
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.015) 3px,
+    rgba(0, 0, 0, 0.015) 4px
   );
   pointer-events: none;
   z-index: 200;
+}
+
+/* =========================
+   CELESTIAL LABELS
+========================= */
+.cel-label {
+  position: absolute;
+  text-align: center;
+  user-select: none;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.cel-label-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: rgba(230, 240, 255, 0.9);
+  text-shadow: 0 0 12px rgba(77, 159, 255, 0.6);
+}
+
+.cel-label-sub {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(150, 180, 220, 0.6);
+  margin-top: 3px;
+}
+
+/* =========================
+   LUNAR SETTLEMENT TOOLTIP
+========================= */
+#settlementTooltip {
+  position: fixed;
+  z-index: 200;
+  max-width: 220px;
+  padding: 10px 14px;
+  background: var(--bg-panel);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 224, 0.3);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.stt-badge {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 2px;
+  color: var(--accent-hot);
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.stt-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  letter-spacing: 1px;
+}
+
+.stt-desc {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }

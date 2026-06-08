@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Artemis Base Camp",
+    "lat": -89.45,
+    "lon": 0.0,
+    "description": "NASA's planned lunar surface habitat near Shackleton Crater, South Pole",
+    "status": "planned"
+  },
+  {
+    "name": "Shackleton Crater Rim",
+    "lat": -89.9,
+    "lon": 0.0,
+    "description": "Proposed site for solar power and ice extraction operations",
+    "status": "proposed"
+  },
+  {
+    "name": "Chang'e Research Station",
+    "lat": -85.5,
+    "lon": 43.2,
+    "description": "CNSA/ROSCOSMOS International Lunar Research Station concept",
+    "status": "proposed"
+  },
+  {
+    "name": "Mare Tranquillitatis Site",
+    "lat": 0.67,
+    "lon": 23.47,
+    "description": "Historic Apollo 11 landing site — proposed heritage preservation zone",
+    "status": "heritage"
+  },
+  {
+    "name": "Lunar Gateway Orbit",
+    "lat": 27.0,
+    "lon": 0.0,
+    "description": "NASA/ESA lunar orbital outpost (near-rectilinear halo orbit)",
+    "status": "in-development"
+  },
+  {
+    "name": "South Pole-Aitken Basin",
+    "lat": -55.0,
+    "lon": 180.0,
+    "description": "Proposed science outpost in largest impact structure in Solar System",
+    "status": "proposed"
+  },
+  {
+    "name": "Malapert Massif",
+    "lat": -86.0,
+    "lon": 0.0,
+    "description": "Proposed communications relay and solar energy hub site",
+    "status": "proposed"
+  }
+]
