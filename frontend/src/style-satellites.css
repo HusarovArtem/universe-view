@@ -128,24 +128,9 @@
   box-shadow: 0 0 8px rgba(77, 159, 255, 0.3);
 }
 
-/* =========================
-   SATELLITE CONTROLS PANEL
-   Positioned left, ABOVE the earth controls panel.
-   #controlsPanel is at bottom:24px with ~160px height → sit above it.
-========================= */
+/* Satellite controls panel is now integrated into #controlsPanel. Hide the old separate panel. */
 .satellite-controls-panel {
-  position: fixed;
-  /* #controlsPanel height ≈ 200px + 24px gap = 224px from bottom */
-  bottom: 230px;
-  left: 20px;
-  width: 200px;
-  padding: 14px 16px;
-  background: rgba(4, 10, 24, 0.82);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(80, 160, 255, 0.14);
-  border-radius: 4px;
-  z-index: 100;
-  box-shadow: 0 0 40px rgba(77, 159, 255, 0.04);
+  display: none !important;
 }
 
 .sc-title {

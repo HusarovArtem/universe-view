@@ -1,14 +1,13 @@
 /**
- * main.js — Universe View Stage 4: Sun, Earth Orbit, Solar System
+ * main.js — Universe View Stage 4: Solar System
  *
- * Stage 4 adds:
- *  1. Animated Sun (FBM photosphere + corona + glow) — moved to 600 scene units
- *  2. Sun-driven DirectionalLight with shadow mapping (eclipse-capable)
- *  3. Clickable Sun registered in CelestialBodyRegistry
- *  4. earthSystem group — Earth/Moon/satellites share a movable root so they
- *     can orbit the visual Sun as a unit
- *  5. Earth orbit toggle — animates earthSystem around SUN_SCENE_POS
- *  6. Updated controls panel: ☀ SUN focus button, SUN LABEL, EARTH ORBIT toggles
+ * Key changes vs Stage 3:
+ *  1. Animated Sun (FBM photosphere, sunspots, helmet-streamer corona)
+ *  2. earthSystem group — Earth/Moon/satellites move as a unit to orbit the Sun
+ *  3. Earth orbit toggle — no FocusManager involved (controls always usable)
+ *  4. Unified collapsible controls panel (satellites embedded, no separate overlay)
+ *  5. Sun clickable + SUN_INFO panel
+ *  6. Auto-expands the focused body's section in the controls panel
  */
 
 import * as THREE from 'three';
@@ -35,9 +34,8 @@ import { MOON_RADIUS_SCENE }                                from './space/object
 import { addLunarSettlement, highlightSettlement, resetSettlement }
     from './space/objects/moon/LunarSettlements.js';
 
-import { TimeControlPanel }      from './ui/controls/TimeControlPanel.js';
-import { SatelliteControlPanel } from './ui/controls/SatelliteControlPanel.js';
-import { SatelliteTooltip }      from './ui/panels/SatelliteTooltip.js';
+import { TimeControlPanel }  from './ui/controls/TimeControlPanel.js';
+import { SatelliteTooltip }  from './ui/panels/SatelliteTooltip.js';
 
 import { CelestialBodyRegistry } from './space/objects/celestial/CelestialBodyRegistry.js';
 import { FocusManager }          from './space/objects/celestial/FocusManager.js';
@@ -58,13 +56,8 @@ const renderer = createRenderer();
 
 // ─── Sun & Lighting ───────────────────────────────────────────────────────────
 
-const {
-    group:            sunGroup,
-    surfaceMesh:      sunSurfaceMesh,
-    update:           updateSun,
-    directionalLight: sunLight,
-    ambientLight:     sunAmbient,
-} = createSun();
+const { group: sunGroup, surfaceMesh: sunSurfaceMesh, update: updateSun,
+        directionalLight: sunLight, ambientLight: sunAmbient } = createSun();
 
 scene.add(sunGroup);
 scene.add(sunLight);
@@ -74,8 +67,8 @@ scene.add(sunAmbient);
 const _sunStartMs = performance.now();
 
 // ─── Earth System Group ───────────────────────────────────────────────────────
-// Earth, Moon, satellites, and orbit lines are all children of earthSystem so
-// they move as a unit when Earth orbits the Sun.
+// Earth, Moon, satellites, orbit lines are children of this group.
+// When Earth orbit is on, this group's position moves around the Sun.
 
 const earthSystem = new THREE.Group();
 earthSystem.name  = 'EarthSystem';
@@ -149,36 +142,22 @@ controls.zoomSpeed     = 0.8;
 
 const bodyRegistry = new CelestialBodyRegistry();
 
-const earthPickMesh = earth.getObjectByName('EarthSurface') ?? earth;
 bodyRegistry.register({
-    id:       'earth',
-    name:     'Earth',
-    group:    earth,
-    pickMesh: earthPickMesh,
-    radius:   EARTH_RADIUS,
-    info:     EARTH_INFO,
-    type:     'planet',
-});
-
-const moonPickMesh = moon.getObjectByName('MoonSurface') ?? moon;
-bodyRegistry.register({
-    id:       'moon',
-    name:     'Moon',
-    group:    moon,
-    pickMesh: moonPickMesh,
-    radius:   MOON_RADIUS_SCENE,
-    info:     MOON_INFO,
-    type:     'moon',
+    id: 'earth', name: 'Earth',
+    group: earth, pickMesh: earth.getObjectByName('EarthSurface') ?? earth,
+    radius: EARTH_RADIUS, info: EARTH_INFO, type: 'planet',
 });
 
 bodyRegistry.register({
-    id:       'sun',
-    name:     'Sun',
-    group:    sunGroup,
-    pickMesh: sunSurfaceMesh,
-    radius:   SUN_VISUAL_RADIUS,
-    info:     SUN_INFO,
-    type:     'star',
+    id: 'moon', name: 'Moon',
+    group: moon, pickMesh: moon.getObjectByName('MoonSurface') ?? moon,
+    radius: MOON_RADIUS_SCENE, info: MOON_INFO, type: 'moon',
+});
+
+bodyRegistry.register({
+    id: 'sun', name: 'Sun',
+    group: sunGroup, pickMesh: sunSurfaceMesh,
+    radius: SUN_VISUAL_RADIUS, info: SUN_INFO, type: 'star',
 });
 
 // ─── Focus Manager ────────────────────────────────────────────────────────────
@@ -191,55 +170,38 @@ focusManager.focusBody(bodyRegistry.get('earth'));
 const selectionViz = new SelectionVisualizer(scene);
 selectionViz.setBody(bodyRegistry.get('earth'));
 
-// ─── Orbit Visualizer ─────────────────────────────────────────────────────────
+// ─── Orbit / Label Systems ────────────────────────────────────────────────────
 
-const moonOrbitViz  = new OrbitVisualizer(earthSystem);
-let moonOrbitVisible = false;
-
-// ─── Celestial Labels ─────────────────────────────────────────────────────────
+const moonOrbitViz   = new OrbitVisualizer(earthSystem);
+let   moonOrbitVisible = false;
 
 const labelSystem = new CelestialLabelSystem(camera, renderer);
-
-labelSystem.register({
-    id:       'earth-label',
-    group:    earth,
-    title:    'EARTH',
-    subtitle: 'Population: 8.1B',
-    radius:   EARTH_RADIUS,
-});
-
-labelSystem.register({
-    id:       'moon-label',
-    group:    moon,
-    title:    'MOON',
-    subtitle: 'Natural Satellite',
-    radius:   MOON_RADIUS_SCENE,
-});
-
-labelSystem.register({
-    id:       'sun-label',
-    group:    sunGroup,
-    title:    'SUN',
-    subtitle: 'G-Type Main-Sequence Star',
-    radius:   SUN_VISUAL_RADIUS,
-});
+labelSystem.register({ id: 'earth-label', group: earth,    title: 'EARTH', subtitle: 'Population: 8.1B',           radius: EARTH_RADIUS      });
+labelSystem.register({ id: 'moon-label',  group: moon,     title: 'MOON',  subtitle: 'Natural Satellite',          radius: MOON_RADIUS_SCENE });
+labelSystem.register({ id: 'sun-label',   group: sunGroup, title: 'SUN',   subtitle: 'G-Type Main-Sequence Star',  radius: SUN_VISUAL_RADIUS });
 
 // ─── Celestial Info Panel ─────────────────────────────────────────────────────
 
 const celestialInfoPanel = new CelestialInfoPanel();
 celestialInfoPanel.show(bodyRegistry.get('earth'));
 
-const _focusBtnIds = { earth: 'focusEarth', moon: 'focusMoon', sun: 'focusSun' };
+// Section IDs auto-expanded when a body is focused
+const _sectionForBody = { earth: 'secEarth', moon: 'secMoon', sun: 'secSun' };
+const _focusBtnIds    = { earth: 'focusEarth', moon: 'focusMoon', sun: 'focusSun' };
 
 focusManager.onFocusChange(({ to }) => {
-    if (to) {
-        celestialInfoPanel.show(to);
-        selectionViz.setBody(to);
+    if (!to) return;
 
-        document.querySelectorAll('.focus-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.getElementById(_focusBtnIds[to.id]);
-        if (activeBtn) activeBtn.classList.add('active');
-    }
+    celestialInfoPanel.show(to);
+    selectionViz.setBody(to);
+
+    // Update active focus button
+    document.querySelectorAll('.focus-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(_focusBtnIds[to.id])?.classList.add('active');
+
+    // Auto-expand the relevant controls section
+    const secId = _sectionForBody[to.id];
+    if (secId) document.getElementById(secId).open = true;
 });
 
 // ─── Click Picker — drag vs click discrimination ──────────────────────────────
@@ -263,10 +225,7 @@ renderer.domElement.addEventListener('pointerup', (e) => {
     _clickNDC.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
 
     const body = bodyRegistry.pickBody(_clickNDC, camera);
-    if (body) {
-        _activateFocus(body.id);
-        infoPanel.hide();
-    }
+    if (body) { _activateFocus(body.id); infoPanel.hide(); }
 });
 
 // ─── Satellite Systems ────────────────────────────────────────────────────────
@@ -277,8 +236,44 @@ const orbitRenderer     = new OrbitRenderer(earthSystem);
 
 let orbitsEnabled = false;
 
-satelliteModule.onUpdate((satellites) => {
-    satelliteRenderer.update(satellites);
+satelliteModule.onUpdate((satellites) => { satelliteRenderer.update(satellites); });
+
+// Satellite controls — now wired directly to elements in #controlsPanel
+document.getElementById('satVisible').addEventListener('change', (e) => {
+    satelliteRenderer.setVisible(e.target.checked);
+});
+
+document.getElementById('satOrbits').addEventListener('change', (e) => {
+    orbitsEnabled = e.target.checked;
+    if (orbitsEnabled) {
+        for (const sat of satelliteModule.satellites.values())
+            orbitRenderer.showOrbit(sat, timeEngine.simTimeMs);
+    } else {
+        orbitRenderer.dispose();
+    }
+});
+
+document.getElementById('satLoad').addEventListener('click', async () => {
+    const group    = document.getElementById('satGroup').value;
+    const statusEl = document.getElementById('scStatus');
+    const countEl  = document.getElementById('scCount');
+    statusEl.textContent = 'Loading…';
+    statusEl.style.color = '';
+    try {
+        const n = await satelliteModule.load(group);
+        countEl.textContent  = `${n.toLocaleString()} objects`;
+        statusEl.textContent = `Loaded ${n} satellites`;
+        statusEl.style.color = '#00ffe0';
+        if (orbitsEnabled) {
+            orbitRenderer.dispose();
+            for (const sat of satelliteModule.satellites.values())
+                orbitRenderer.showOrbit(sat, timeEngine.simTimeMs);
+        }
+    } catch (err) {
+        statusEl.textContent = `Error: ${err.message}`;
+        statusEl.style.color = '#ff4455';
+        console.error('[Satellites] Load failed:', err);
+    }
 });
 
 // ─── UI Systems ───────────────────────────────────────────────────────────────
@@ -294,50 +289,13 @@ const satTooltip = new SatelliteTooltip();
 
 new TimeControlPanel(timeEngine);
 
-const satControl = new SatelliteControlPanel({
-    onGroupChange: async (group) => {
-        satControl.setStatus('Loading…');
-        try {
-            const n = await satelliteModule.load(group);
-            satControl.setCount(n);
-            satControl.setStatus(`Loaded ${n} satellites`);
-            if (orbitsEnabled) {
-                orbitRenderer.dispose();
-                for (const sat of satelliteModule.satellites.values()) {
-                    orbitRenderer.showOrbit(sat, timeEngine.simTimeMs);
-                }
-            }
-        } catch (err) {
-            satControl.setStatus(`Error: ${err.message}`, true);
-            console.error('[Satellites] Load failed:', err);
-        }
-    },
-    onVisibilityChange: (v) => satelliteRenderer.setVisible(v),
-    onOrbitToggle: (enabled) => {
-        orbitsEnabled = enabled;
-        if (enabled) {
-            for (const sat of satelliteModule.satellites.values()) {
-                orbitRenderer.showOrbit(sat, timeEngine.simTimeMs);
-            }
-        } else {
-            orbitRenderer.dispose();
-        }
-    },
-});
-
 // ─── Lunar Settlement Hover ───────────────────────────────────────────────────
 
 const settlementTooltip = document.getElementById('settlementTooltip');
 
 const moonHoverSystem = new HoverSystem(camera, renderer.domElement, {
-    onEnter: (mesh) => {
-        highlightSettlement(mesh);
-        _showSettlementTooltip(mesh);
-    },
-    onLeave: (mesh) => {
-        resetSettlement(mesh);
-        _hideSettlementTooltip();
-    },
+    onEnter: (mesh) => { highlightSettlement(mesh); _showSettlementTooltip(mesh); },
+    onLeave: (mesh) => { resetSettlement(mesh);     _hideSettlementTooltip();     },
 });
 
 buildLunarSettlements();
@@ -350,43 +308,24 @@ let showEarthLabels = true;
 let showMoonLabels  = true;
 let showSunLabel    = true;
 
-document.getElementById('spinToggle').addEventListener('change', (e) => {
-    earthSpinning = e.target.checked;
-});
+document.getElementById('spinToggle').addEventListener('change',    (e) => { earthSpinning = e.target.checked; });
+document.getElementById('atmosphereToggle').addEventListener('change', (e) => setAtmosphereVisible(earth, e.target.checked));
 
-document.getElementById('citiesToggle').addEventListener('change', (e) => {
-    showCities               = e.target.checked;
+document.getElementById('citiesToggle').addEventListener('change',  (e) => {
+    showCities = e.target.checked;
     earthCitiesGroup.visible = showCities;
     if (!showCities) infoPanel.hide();
 });
 
-document.getElementById('atmosphereToggle').addEventListener('change', (e) => {
-    setAtmosphereVisible(earth, e.target.checked);
-});
-
 document.getElementById('moonOrbitToggle').addEventListener('change', (e) => {
     moonOrbitVisible = e.target.checked;
-    if (moonOrbitVisible) {
-        moonOrbitViz.showOrbit(MOON_ORBITAL_PARAMS);
-    } else {
-        moonOrbitViz.dispose();
-    }
+    if (moonOrbitVisible) moonOrbitViz.showOrbit(MOON_ORBITAL_PARAMS);
+    else                  moonOrbitViz.dispose();
 });
 
-document.getElementById('earthLabelsToggle').addEventListener('change', (e) => {
-    showEarthLabels = e.target.checked;
-    labelSystem.setVisible('earth-label', showEarthLabels);
-});
-
-document.getElementById('moonLabelsToggle').addEventListener('change', (e) => {
-    showMoonLabels = e.target.checked;
-    labelSystem.setVisible('moon-label', showMoonLabels);
-});
-
-document.getElementById('sunLabelToggle').addEventListener('change', (e) => {
-    showSunLabel = e.target.checked;
-    labelSystem.setVisible('sun-label', showSunLabel);
-});
+document.getElementById('earthLabelsToggle').addEventListener('change',  (e) => { showEarthLabels = e.target.checked; labelSystem.setVisible('earth-label', showEarthLabels); });
+document.getElementById('moonLabelsToggle').addEventListener('change',   (e) => { showMoonLabels  = e.target.checked; labelSystem.setVisible('moon-label',  showMoonLabels);  });
+document.getElementById('sunLabelToggle').addEventListener('change',     (e) => { showSunLabel    = e.target.checked; labelSystem.setVisible('sun-label',   showSunLabel);    });
 
 document.getElementById('lunarSettlementsToggle').addEventListener('change', (e) => {
     showLunarSettlements         = e.target.checked;
@@ -401,7 +340,7 @@ function _activateFocus(bodyId) {
         controls.maxDistance = 2000;
     } else {
         controls.minDistance = 4.5;
-        controls.maxDistance = 600;
+        if (!earthOrbitEnabled) controls.maxDistance = 600;
     }
     focusManager.focusBody(bodyRegistry.get(bodyId));
 }
@@ -413,46 +352,62 @@ document.getElementById('focusSun').addEventListener('click',   () => _activateF
 document.getElementById('focusEarth').classList.add('active');
 
 // ─── Earth Orbit ──────────────────────────────────────────────────────────────
+//
+// IMPORTANT: we do NOT use focusManager.focusBody() here.
+// focusBody() disables OrbitControls during the lerp, and because Earth keeps
+// moving the lerp never converges → controls stay disabled forever.
+// Instead we directly update controls.target each frame to follow Earth,
+// keeping OrbitControls fully functional the whole time.
 
-const EARTH_ORBIT_RADIUS = 150;
-const EARTH_ORBIT_PERIOD = 120_000; // ms — 2 min per full orbit
+const EARTH_ORBIT_RADIUS = 150;   // scene units from Sun
+const EARTH_ORBIT_PERIOD = 120_000; // ms — 2 min per orbit
 
 let earthOrbitEnabled  = false;
 let _earthOrbitStartMs = 0;
 let _earthOrbitRing    = null;
+const _earthWorldPos   = new THREE.Vector3();
 
 document.getElementById('earthOrbitToggle').addEventListener('change', (e) => {
     earthOrbitEnabled = e.target.checked;
 
     if (earthOrbitEnabled) {
-        // Choose initAngle so Earth starts at the orbit point closest to world origin.
-        // That point lies in the direction from Sun toward origin: angle = atan2(-z,-x).
+        // Choose initAngle so Earth starts at orbit point closest to world origin.
+        // That point is in the direction from Sun toward origin.
         const initAngle = Math.atan2(-SUN_SCENE_POS.z, -SUN_SCENE_POS.x);
-        // normalise to [0, 2π) so elapsed is positive
         const normAngle = ((initAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
         _earthOrbitStartMs = performance.now() - (normAngle / (Math.PI * 2)) * EARTH_ORBIT_PERIOD;
 
-        controls.maxDistance = 2000;
+        // Compute initial Earth position and move the group there now
+        const a0 = normAngle;
+        earthSystem.position.set(
+            SUN_SCENE_POS.x + EARTH_ORBIT_RADIUS * Math.cos(a0),
+            SUN_SCENE_POS.y,
+            SUN_SCENE_POS.z + EARTH_ORBIT_RADIUS * Math.sin(a0),
+        );
 
-        // Build and add orbit ring (world-space circle around Sun)
+        // Snap controls.target to Earth's new world position (camera stays offset)
+        controls.target.copy(earthSystem.position);
+        controls.maxDistance = 2000;
+        // Cancel any in-progress FocusManager transition so controls stay enabled
+        focusManager.cancelFocus();
+
+        // Earth orbit path ring
         _earthOrbitRing = _buildEarthOrbitRing();
         scene.add(_earthOrbitRing);
 
-        // Auto-focus Earth so camera follows it into orbital position
-        _activateFocus('earth');
-
     } else {
-        // Restore Earth + Moon to world origin
+        // Restore Earth to world origin
         earthSystem.position.set(0, 0, 0);
+        controls.target.set(0, 0, 0);
+        controls.maxDistance = 600;
+        focusManager.cancelFocus();
 
-        // Restore sun shadow camera to default Earth-at-origin values
+        // Restore sun shadow camera
         sunLight.target.position.set(0, 0, 0);
         sunLight.target.updateMatrixWorld();
         sunLight.shadow.camera.near = 480;
         sunLight.shadow.camera.far  = 1050;
         sunLight.shadow.camera.updateProjectionMatrix();
-
-        controls.maxDistance = 600;
 
         if (_earthOrbitRing) {
             _earthOrbitRing.geometry.dispose();
@@ -460,9 +415,6 @@ document.getElementById('earthOrbitToggle').addEventListener('change', (e) => {
             scene.remove(_earthOrbitRing);
             _earthOrbitRing = null;
         }
-
-        // Re-focus Earth at origin
-        _activateFocus('earth');
     }
 });
 
@@ -478,20 +430,13 @@ function _buildEarthOrbitRing() {
         ));
     }
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({
-        color:       0x2244bb,
-        transparent: true,
-        opacity:     0.28,
-        depthWrite:  false,
-        blending:    THREE.AdditiveBlending,
-    });
+    const mat = new THREE.LineBasicMaterial({ color: 0x2244cc, transparent: true, opacity: 0.28, depthWrite: false, blending: THREE.AdditiveBlending });
     return new THREE.Line(geo, mat);
 }
 
 // ─── Tooltip mouse tracking ───────────────────────────────────────────────────
 
-let _lastMouseX = 0;
-let _lastMouseY = 0;
+let _lastMouseX = 0, _lastMouseY = 0;
 
 renderer.domElement.addEventListener('mousemove', (e) => {
     _lastMouseX = e.clientX;
@@ -508,7 +453,6 @@ function animate() {
     requestAnimationFrame(animate);
 
     timeEngine.tick(performance.now());
-
     updateSun((performance.now() - _sunStartMs) * 0.001);
 
     if (earthSpinning) earth.rotation.y += 0.0012;
@@ -522,10 +466,16 @@ function animate() {
             SUN_SCENE_POS.y,
             SUN_SCENE_POS.z + EARTH_ORBIT_RADIUS * Math.sin(angle),
         );
-        // Keep directional light aimed from Sun toward Earth each frame
+
+        // Keep OrbitControls.target on Earth so user can freely zoom/spin
+        // (only when FocusManager isn't doing its own lerp)
+        if (!focusManager.isTransitioning) {
+            controls.target.copy(earthSystem.position);
+        }
+
+        // Update sun light direction toward Earth
         sunLight.target.position.copy(earthSystem.position);
         sunLight.target.updateMatrixWorld();
-        // Adjust shadow camera: Earth is ~150 units from Sun
         sunLight.shadow.camera.near = 80;
         sunLight.shadow.camera.far  = 600;
         sunLight.shadow.camera.updateProjectionMatrix();

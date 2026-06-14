@@ -80,6 +80,12 @@ export class FocusManager {
         }
     }
 
+    /** Cancel any in-progress transition and immediately re-enable controls. */
+    cancelFocus() {
+        this.#transitioning = false;
+        this.#controls.enabled = true;
+    }
+
     onFocusChange(callback) {
         this.#listeners.add(callback);
         return () => this.#listeners.delete(callback);

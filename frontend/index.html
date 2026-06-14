@@ -18,7 +18,7 @@
 <!-- HUD Top Bar -->
 <div id="hud">
   <h1 class="hud-title">UNIVERSE <span class="accent">VIEW</span></h1>
-  <div id="hud-time" class="hud-time">STAGE III — MULTI-BODY</div>
+  <div id="hud-time" class="hud-time">STAGE IV — SOLAR SYSTEM</div>
   <div id="hud-coords" class="hud-coords">LAT — / LON —</div>
 </div>
 
@@ -39,7 +39,11 @@
 <!-- Lunar Settlement Tooltip -->
 <div id="settlementTooltip" style="display:none"></div>
 
-<!-- Controls Panel (bottom left) -->
+<!-- ============================================================
+     UNIFIED CONTROLS PANEL (bottom-left)
+     Collapsible sections — auto-expands based on current focus.
+     Satellite controls embedded here; old separate panel removed.
+============================================================ -->
 <div id="controlsPanel">
   <div class="control-title">VIEW CONTROLS</div>
 
@@ -50,90 +54,128 @@
     <button class="focus-btn" id="focusSun">☀ SUN</button>
   </div>
 
-  <div class="control-section-title">SUN</div>
-  <label class="toggle-row">
-    <div class="toggle-label">SUN LABEL</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="sunLabelToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
+  <!-- ── EARTH section ───────────────────────────────────── -->
+  <details class="ctrl-section" id="secEarth" open>
+    <summary class="ctrl-section-hdr">EARTH</summary>
+    <label class="toggle-row">
+      <div class="toggle-label">SPIN</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="spinToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">CAPITALS</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="citiesToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">BORDERS</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="bordersToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">ATMOSPHERE</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="atmosphereToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">EARTH LABELS</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="earthLabelsToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">ORBIT SUN</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="earthOrbitToggle" />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+  </details>
 
-  <div class="control-section-title">EARTH</div>
-  <label class="toggle-row">
-    <div class="toggle-label">SPIN</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="spinToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">CAPITALS</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="citiesToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">BORDERS</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="bordersToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">ATMOSPHERE</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="atmosphereToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">EARTH LABELS</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="earthLabelsToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">EARTH ORBIT</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="earthOrbitToggle" />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
+  <!-- ── MOON section ────────────────────────────────────── -->
+  <details class="ctrl-section" id="secMoon">
+    <summary class="ctrl-section-hdr">MOON</summary>
+    <label class="toggle-row">
+      <div class="toggle-label">MOON ORBIT</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="moonOrbitToggle" />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">MOON LABELS</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="moonLabelsToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">LUNAR SITES</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="lunarSettlementsToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+  </details>
 
-  <div class="control-section-title">MOON</div>
-  <label class="toggle-row">
-    <div class="toggle-label">MOON ORBIT</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="moonOrbitToggle" />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">MOON LABELS</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="moonLabelsToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
-  <label class="toggle-row">
-    <div class="toggle-label">LUNAR SITES</div>
-    <div class="toggle-wrapper">
-      <input type="checkbox" id="lunarSettlementsToggle" checked />
-      <span class="toggle-slider"></span>
-    </div>
-  </label>
+  <!-- ── SUN section ─────────────────────────────────────── -->
+  <details class="ctrl-section" id="secSun">
+    <summary class="ctrl-section-hdr">SUN</summary>
+    <label class="toggle-row">
+      <div class="toggle-label">SUN LABEL</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="sunLabelToggle" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+  </details>
+
+  <!-- ── SATELLITES section ──────────────────────────────── -->
+  <details class="ctrl-section" id="secSats">
+    <summary class="ctrl-section-hdr">SATELLITES</summary>
+    <div class="sc-count" id="scCount">— objects</div>
+    <label class="toggle-row">
+      <div class="toggle-label">SHOW</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="satVisible" checked />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <label class="toggle-row">
+      <div class="toggle-label">ORBITS</div>
+      <div class="toggle-wrapper">
+        <input type="checkbox" id="satOrbits" />
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <div class="sc-group-label">DATASET</div>
+    <select id="satGroup" class="sc-select">
+      <option value="active">Active Satellites</option>
+      <option value="iss">ISS</option>
+      <option value="starlink">Starlink</option>
+    </select>
+    <button id="satLoad" class="sc-load-btn">LOAD</button>
+    <div class="sc-status" id="scStatus"></div>
+  </details>
+
 </div>
 
 <!-- Stage indicator (bottom right) -->
 <div id="stageIndicator">
-  <div class="stage active"   data-stage="0">STAGE 0</div>
-  <div class="stage active"   data-stage="1">STAGE 1</div>
-  <div class="stage active"   data-stage="2">STAGE 2</div>
-  <div class="stage active"   data-stage="3">STAGE 3</div>
-  <div class="stage active"   data-stage="4">STAGE 4</div>
+  <div class="stage active" data-stage="0">STAGE 0</div>
+  <div class="stage active" data-stage="1">STAGE 1</div>
+  <div class="stage active" data-stage="2">STAGE 2</div>
+  <div class="stage active" data-stage="3">STAGE 3</div>
+  <div class="stage active" data-stage="4">STAGE 4</div>
 </div>
 
 <script type="module" src="/src/main.js"></script>
