@@ -143,7 +143,9 @@ export function createMoon(timeEngine) {
 
     // ── Mesh ──────────────────────────────────────────────────────────────────
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = 'MoonSurface';
+    mesh.name          = 'MoonSurface';
+    mesh.castShadow    = true;
+    mesh.receiveShadow = true;
 
     // Tidal lock initial orientation:
     // Rotate so the texture "near side" faces −Z (toward the camera's default

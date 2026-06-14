@@ -28,7 +28,9 @@ export function createEarth() {
     });
 
     const surfaceMesh = new THREE.Mesh(surfaceGeo, surfaceMat);
-    surfaceMesh.name = 'EarthSurface';
+    surfaceMesh.name         = 'EarthSurface';
+    surfaceMesh.castShadow   = true;
+    surfaceMesh.receiveShadow = true;
     group.add(surfaceMesh);
 
     // ── Atmosphere ────────────────────────────────────────────────────────────

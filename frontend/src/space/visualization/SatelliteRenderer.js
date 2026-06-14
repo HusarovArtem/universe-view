@@ -23,7 +23,7 @@ export class SatelliteRenderer {
     static MAX_INSTANCES = 10000;
 
     #mesh;
-    #scene;
+    #parent;
     // Rebuilt every update() call — always accurate
     #idToIndex = new Map();
     #indexToId = new Map();
@@ -35,8 +35,8 @@ export class SatelliteRenderer {
     #mouse;
     #visible = true;
 
-    constructor(scene, domElement) {
-        this.#scene     = scene;
+    constructor(parent, domElement) {
+        this.#parent    = parent;
         this.#raycaster = new THREE.Raycaster();
         this.#mouse     = new THREE.Vector2(-9999, -9999);
         this.#buildMesh();
@@ -50,7 +50,7 @@ export class SatelliteRenderer {
         this.#mesh.name          = 'SatelliteInstances';
         this.#mesh.count         = 0;
         this.#mesh.frustumCulled = false;
-        this.#scene.add(this.#mesh);
+        this.#parent.add(this.#mesh);
     }
 
     #bindPointer(el) {
@@ -120,6 +120,6 @@ export class SatelliteRenderer {
     dispose() {
         this.#mesh.geometry.dispose();
         this.#mesh.material.dispose();
-        this.#scene.remove(this.#mesh);
+        this.#parent.remove(this.#mesh);
     }
 }

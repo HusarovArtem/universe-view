@@ -47,7 +47,17 @@
   <div class="focus-row">
     <button class="focus-btn" id="focusEarth">⊕ EARTH</button>
     <button class="focus-btn" id="focusMoon">☽ MOON</button>
+    <button class="focus-btn" id="focusSun">☀ SUN</button>
   </div>
+
+  <div class="control-section-title">SUN</div>
+  <label class="toggle-row">
+    <div class="toggle-label">SUN LABEL</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="sunLabelToggle" checked />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
 
   <div class="control-section-title">EARTH</div>
   <label class="toggle-row">
@@ -85,6 +95,13 @@
       <span class="toggle-slider"></span>
     </div>
   </label>
+  <label class="toggle-row">
+    <div class="toggle-label">EARTH ORBIT</div>
+    <div class="toggle-wrapper">
+      <input type="checkbox" id="earthOrbitToggle" />
+      <span class="toggle-slider"></span>
+    </div>
+  </label>
 
   <div class="control-section-title">MOON</div>
   <label class="toggle-row">
@@ -116,6 +133,7 @@
   <div class="stage active"   data-stage="1">STAGE 1</div>
   <div class="stage active"   data-stage="2">STAGE 2</div>
   <div class="stage active"   data-stage="3">STAGE 3</div>
+  <div class="stage active"   data-stage="4">STAGE 4</div>
 </div>
 
 <script type="module" src="/src/main.js"></script>

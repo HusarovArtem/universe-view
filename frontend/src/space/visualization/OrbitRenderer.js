@@ -18,8 +18,8 @@ const MAX_ORBIT_LINES   = 200;
  * Decoupled from propagation — only reads orbital elements + time.
  */
 export class OrbitRenderer {
-    /** @type {THREE.Scene} */
-    #scene;
+    /** @type {THREE.Object3D} */
+    #parent;
     /** @type {Map<string, THREE.Line>} sat id → line */
     #lines = new Map();
     /** @type {boolean} */
@@ -27,8 +27,8 @@ export class OrbitRenderer {
     /** @type {Set<string>} currently displayed satellite ids */
     #activeIds = new Set();
 
-    constructor(scene) {
-        this.#scene = scene;
+    constructor(parent) {
+        this.#parent = parent;
     }
 
     /**
@@ -54,7 +54,7 @@ export class OrbitRenderer {
         line.name   = `Orbit_${sat.id}`;
         line.visible = this.#visible;
 
-        this.#scene.add(line);
+        this.#parent.add(line);
         this.#lines.set(sat.id, line);
         this.#activeIds.add(sat.id);
     }
@@ -88,7 +88,7 @@ export class OrbitRenderer {
         if (!line) return;
         line.geometry.dispose();
         line.material.dispose();
-        this.#scene.remove(line);
+        this.#parent.remove(line);
         this.#lines.delete(id);
     }
 

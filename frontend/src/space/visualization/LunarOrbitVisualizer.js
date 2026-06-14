@@ -28,13 +28,13 @@ const ORBIT_SEGMENTS = 256;
  */
 
 export class OrbitVisualizer {
-    #scene;
+    #parent;
     #line     = null;
     #nodeLine = null;
     #visible  = true;
 
-    constructor(scene) {
-        this.#scene = scene;
+    constructor(parent) {
+        this.#parent = parent;
     }
 
     showOrbit(params) {
@@ -53,7 +53,7 @@ export class OrbitVisualizer {
         this.#line         = new THREE.Line(geo, mat);
         this.#line.name    = params.name ?? 'OrbitPath';
         this.#line.visible = this.#visible;
-        this.#scene.add(this.#line);
+        this.#parent.add(this.#line);
 
         this.#buildNodeLine(params);
     }
@@ -70,13 +70,13 @@ export class OrbitVisualizer {
         if (this.#line) {
             this.#line.geometry.dispose();
             this.#line.material.dispose();
-            this.#scene.remove(this.#line);
+            this.#parent.remove(this.#line);
             this.#line = null;
         }
         if (this.#nodeLine) {
             this.#nodeLine.geometry.dispose();
             this.#nodeLine.material.dispose();
-            this.#scene.remove(this.#nodeLine);
+            this.#parent.remove(this.#nodeLine);
             this.#nodeLine = null;
         }
     }
@@ -145,7 +145,7 @@ export class OrbitVisualizer {
         this.#nodeLine         = new THREE.Line(geo, mat);
         this.#nodeLine.name    = 'OrbitNodeLine';
         this.#nodeLine.visible = this.#visible;
-        this.#scene.add(this.#nodeLine);
+        this.#parent.add(this.#nodeLine);
     }
 }
 

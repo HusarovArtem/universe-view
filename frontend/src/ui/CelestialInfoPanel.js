@@ -101,3 +101,20 @@ export const MOON_INFO = {
         'GRAVITY':     '1.62 m/s²',
     },
 };
+
+/**
+ * Static data for Sun.
+ * @type {Object}
+ */
+export const SUN_INFO = {
+    name: 'SUN',
+    type: 'G-Type Main-Sequence Star · Sol',
+    fields: {
+        'RADIUS':       '696,000 km',
+        'MASS':         '1.989 × 10³⁰ kg',
+        'SURFACE TEMP': '5,778 K',
+        'DISTANCE':     '~149.6 million km',
+        'LUMINOSITY':   '3.828 × 10²⁶ W',
+        'AGE':          '4.603 billion years',
+    },
+};

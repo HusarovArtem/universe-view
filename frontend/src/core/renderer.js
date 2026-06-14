@@ -15,6 +15,12 @@ export function createRenderer() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x00050f, 1);
 
+    // Shadow mapping — required for eclipse-capable architecture.
+    // PCFSoftShadowMap gives smooth penumbra edges without the hard-edge
+    // artifacts of basic shadow maps.
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type    = THREE.PCFShadowMap;
+
     document.body.appendChild(renderer.domElement);
 
     return renderer;
