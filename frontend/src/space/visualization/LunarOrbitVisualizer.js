@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import {
     SCENE_SCALE,
-    MOON_SMA_KM,
+    VISUAL_MOON_SMA_KM,
     MOON_ECCENTRICITY,
     MOON_INCLINATION_RAD,
     MOON_RAAN_RAD_J2000,
@@ -149,9 +149,8 @@ export class OrbitVisualizer {
     }
 }
 
-/** Pre-built orbital parameters for the Moon. */
 export const MOON_ORBITAL_PARAMS = {
-    smaKm:          MOON_SMA_KM,
+    smaKm:          VISUAL_MOON_SMA_KM,
     eccentricity:   MOON_ECCENTRICITY,
     inclinationRad: MOON_INCLINATION_RAD,
     raanRad:        MOON_RAAN_RAD_J2000,

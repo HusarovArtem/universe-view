@@ -277,7 +277,7 @@ export function createSun() {
     group.add(glowSprite);
 
     // ── Directional light ─────────────────────────────────────────────────────
-    const dir                 = new THREE.DirectionalLight(0xfff5e0, 1.9);
+    const dir                 = new THREE.DirectionalLight(0xfff5e0, 2.2);
     dir.name                  = 'SunDirectionalLight';
     dir.position.copy(SUN_SCENE_POS);
     dir.target.position.set(0, 0, 0);
@@ -293,7 +293,7 @@ export function createSun() {
     dir.shadow.bias           = -0.001;
     dir.shadow.normalBias     =  0.05;
 
-    const ambient = new THREE.AmbientLight(0x112244, 0.85);
+    const ambient = new THREE.AmbientLight(0x0d1a33, 0.18);
     ambient.name  = 'SpaceAmbient';
 
     const _unis = [surfUni, cf.uniforms, ci.uniforms, cm.uniforms, ch.uniforms];

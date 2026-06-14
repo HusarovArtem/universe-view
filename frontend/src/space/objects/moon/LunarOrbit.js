@@ -31,7 +31,7 @@
 
 import * as THREE from 'three';
 import {
-    MOON_SMA_KM,
+    VISUAL_MOON_SMA_KM,
     MOON_ECCENTRICITY,
     MOON_INCLINATION_RAD,
     MOON_RAAN_RAD_J2000,
@@ -107,9 +107,8 @@ export function computeLunarState(simTimeMs) {
         Math.sqrt(1.0 - MOON_ECCENTRICITY) * Math.cos(E * 0.5),
     );
 
-    // 6. Orbital radius (km)
-    //    r = a(1 − e·cosE)
-    const r = MOON_SMA_KM * (1.0 - MOON_ECCENTRICITY * Math.cos(E));
+    // 6. Orbital radius (km) — uses visual SMA for comfortable on-screen distance
+    const r = VISUAL_MOON_SMA_KM * (1.0 - MOON_ECCENTRICITY * Math.cos(E));
 
     // 7. Perifocal frame position
     //    x_pqw = r·cos(ν)

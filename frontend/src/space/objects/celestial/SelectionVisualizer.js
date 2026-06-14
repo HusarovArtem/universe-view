@@ -28,30 +28,19 @@ const _bodyPos   = new THREE.Vector3();
 const _camPos    = new THREE.Vector3();
 
 export class SelectionVisualizer {
-    /** @type {THREE.Mesh} */
     #ring;
-
-    /** @type {THREE.Mesh} */
     #ringOuter;
-
-    /** @type {import('../celestial/CelestialBodyRegistry.js').CelestialBodyDescriptor|null} */
     #body = null;
-
-    /** @type {THREE.Scene} */
     #scene;
 
-    /**
-     * @param {THREE.Scene} scene
-     */
     constructor(scene) {
         this.#scene = scene;
 
-        // Inner ring
-        const ringGeo = new THREE.RingGeometry(1.0, 1.06, 64);
+        const ringGeo = new THREE.RingGeometry(0.975, 1.0, 128);
         const ringMat = new THREE.MeshBasicMaterial({
-            color:       0x00ffe0,
+            color:       0x00ffee,
             transparent: true,
-            opacity:     0.75,
+            opacity:     0.88,
             side:        THREE.DoubleSide,
             depthWrite:  false,
             blending:    THREE.AdditiveBlending,
@@ -61,12 +50,11 @@ export class SelectionVisualizer {
         this.#ring.visible = false;
         scene.add(this.#ring);
 
-        // Outer softer ring
-        const outerGeo = new THREE.RingGeometry(1.1, 1.2, 64);
+        const outerGeo = new THREE.RingGeometry(1.04, 1.07, 128);
         const outerMat = new THREE.MeshBasicMaterial({
-            color:       0x4d9fff,
+            color:       0x55aaff,
             transparent: true,
-            opacity:     0.2,
+            opacity:     0.14,
             side:        THREE.DoubleSide,
             depthWrite:  false,
             blending:    THREE.AdditiveBlending,
@@ -77,40 +65,31 @@ export class SelectionVisualizer {
         scene.add(this.#ringOuter);
     }
 
-    /**
-     * Set the body to highlight.
-     * @param {import('../celestial/CelestialBodyRegistry.js').CelestialBodyDescriptor|null} descriptor
-     */
     setBody(descriptor) {
         this.#body = descriptor;
-
         const visible = descriptor !== null;
         this.#ring.visible      = visible;
         this.#ringOuter.visible = visible;
     }
 
-    /**
-     * Update ring position and scale. Call every frame.
-     * @param {THREE.Camera} camera
-     */
     update(camera) {
         if (!this.#body) return;
 
         this.#body.group.getWorldPosition(_bodyPos);
         camera.getWorldPosition(_camPos);
 
-        // Position rings at body center
         this.#ring.position.copy(_bodyPos);
         this.#ringOuter.position.copy(_bodyPos);
 
-        // Billboard: face camera
         this.#ring.lookAt(_camPos);
         this.#ringOuter.lookAt(_camPos);
 
-        // Scale based on body radius — ring sits just outside sphere surface
-        const r = this.#body.radius * 1.35;
+        const r = this.#body.radius * 1.10;
         this.#ring.scale.setScalar(r);
         this.#ringOuter.scale.setScalar(r);
+
+        const pulse = 0.70 + 0.18 * Math.sin(performance.now() * 0.0025);
+        this.#ring.material.opacity = pulse;
     }
 
     dispose() {

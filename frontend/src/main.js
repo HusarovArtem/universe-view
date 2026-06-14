@@ -133,7 +133,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.enableZoom    = true;
 controls.minDistance   = 4.5;
-controls.maxDistance   = 600;
+controls.maxDistance   = 800;
 controls.enablePan     = false;
 controls.rotateSpeed   = 0.5;
 controls.zoomSpeed     = 0.8;
@@ -340,7 +340,7 @@ function _activateFocus(bodyId) {
         controls.maxDistance = 2000;
     } else {
         controls.minDistance = 4.5;
-        if (!earthOrbitEnabled) controls.maxDistance = 600;
+        if (!earthOrbitEnabled) controls.maxDistance = 800;
     }
     focusManager.focusBody(bodyRegistry.get(bodyId));
 }
@@ -366,6 +366,7 @@ let earthOrbitEnabled  = false;
 let _earthOrbitStartMs = 0;
 let _earthOrbitRing    = null;
 const _earthWorldPos   = new THREE.Vector3();
+const _earthPrevPos    = new THREE.Vector3();
 
 document.getElementById('earthOrbitToggle').addEventListener('change', (e) => {
     earthOrbitEnabled = e.target.checked;
@@ -385,8 +386,8 @@ document.getElementById('earthOrbitToggle').addEventListener('change', (e) => {
             SUN_SCENE_POS.z + EARTH_ORBIT_RADIUS * Math.sin(a0),
         );
 
-        // Snap controls.target to Earth's new world position (camera stays offset)
         controls.target.copy(earthSystem.position);
+        _earthPrevPos.copy(earthSystem.position);
         controls.maxDistance = 2000;
         // Cancel any in-progress FocusManager transition so controls stay enabled
         focusManager.cancelFocus();
@@ -399,7 +400,7 @@ document.getElementById('earthOrbitToggle').addEventListener('change', (e) => {
         // Restore Earth to world origin
         earthSystem.position.set(0, 0, 0);
         controls.target.set(0, 0, 0);
-        controls.maxDistance = 600;
+        controls.maxDistance = 800;
         focusManager.cancelFocus();
 
         // Restore sun shadow camera
@@ -461,17 +462,22 @@ function animate() {
     if (earthOrbitEnabled) {
         const elapsed = performance.now() - _earthOrbitStartMs;
         const angle   = (elapsed / EARTH_ORBIT_PERIOD) * Math.PI * 2;
-        earthSystem.position.set(
-            SUN_SCENE_POS.x + EARTH_ORBIT_RADIUS * Math.cos(angle),
-            SUN_SCENE_POS.y,
-            SUN_SCENE_POS.z + EARTH_ORBIT_RADIUS * Math.sin(angle),
-        );
+        const nextX   = SUN_SCENE_POS.x + EARTH_ORBIT_RADIUS * Math.cos(angle);
+        const nextZ   = SUN_SCENE_POS.z + EARTH_ORBIT_RADIUS * Math.sin(angle);
 
-        // Keep OrbitControls.target on Earth so user can freely zoom/spin
-        // (only when FocusManager isn't doing its own lerp)
         if (!focusManager.isTransitioning) {
-            controls.target.copy(earthSystem.position);
+            // Move camera by same delta as Earth so the orbit pivot stays stable
+            const dx = nextX - _earthPrevPos.x;
+            const dz = nextZ - _earthPrevPos.z;
+            camera.position.x += dx;
+            camera.position.z += dz;
+            controls.target.x  = nextX;
+            controls.target.y  = SUN_SCENE_POS.y;
+            controls.target.z  = nextZ;
         }
+
+        earthSystem.position.set(nextX, SUN_SCENE_POS.y, nextZ);
+        _earthPrevPos.set(nextX, SUN_SCENE_POS.y, nextZ);
 
         // Update sun light direction toward Earth
         sunLight.target.position.copy(earthSystem.position);

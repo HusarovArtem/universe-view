@@ -36,11 +36,18 @@ export const MOON_RADIUS_SCENE = MOON_RADIUS_KM * SCENE_SCALE;
 // Source: Meeus "Astronomical Algorithms" 2nd ed., Chapter 47 & 53;
 // and JPL Horizons System mean orbital elements for the Moon.
 
-/** Semi-major axis of the lunar orbit (km) */
+/** Semi-major axis of the lunar orbit (km) — physical value */
 export const MOON_SMA_KM = 384_400;
 
 /** Semi-major axis in scene units */
 export const MOON_SMA_SCENE = MOON_SMA_KM * SCENE_SCALE;
+
+/**
+ * Compressed SMA used for scene rendering only.
+ * Real Moon at 384,400 km → 301 scene units; too far for comfortable viewing.
+ * 50,000 km → ~39 scene units, just outside the GEO belt (~33 units).
+ */
+export const VISUAL_MOON_SMA_KM = 50_000;
 
 /** Orbital eccentricity — causes visible variation in apparent size */
 export const MOON_ECCENTRICITY = 0.0549;
